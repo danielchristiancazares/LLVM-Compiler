@@ -40,6 +40,7 @@
 #include <stdlib.h>   // for NULL
 #include "location.h"
 #include <iostream>
+#include "irgen.h"
 
 using namespace std;
 
@@ -59,6 +60,9 @@ class Node {
  protected:
   yyltype *location;
   Node *parent;
+  static IRGenerator *irgen;
+  static SymbolTable *symtable;
+
 
  public:
   Node (yyltype loc);
@@ -80,7 +84,8 @@ class Node {
   void Print (int indentLevel, const char *label = NULL);
 
   virtual void PrintChildren (int indentLevel) { }
-};
+  
+  };
 
 class Identifier : public Node {
  protected:
