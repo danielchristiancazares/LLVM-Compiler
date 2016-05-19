@@ -32,6 +32,10 @@ YACC = bison
 # Also STL has some signed/unsigned comparisons we want to suppress
 CFLAGS = -g -Wall -Wno-unused -Wno-sign-compare `llvm-config --cxxflags` 
 
+# For local machine development
+# LDFLAGS: -L/usr/local/opt/v8-315/lib
+# CPPFLAGS: -I/usr/local/opt/v8-315/include
+
 # The -d flag tells lex to set up for debugging. Can turn on/off by
 # setting value of global yy_flex_debug inside the scanner itself
 LEXFLAGS = -d
@@ -44,7 +48,7 @@ YACCFLAGS = -dvty
 # YACCFLAGS = -dvty --report=all --report-file=y.debug
 
 # Link with standard C library, math library, and lex library
-LIBS = -lc -lm -ll `llvm-config --ldflags --libs` 
+LIBS = -lc -lm -ll `llvm-config --ldflags --libs`
 
 # Rules for various parts of the target
 

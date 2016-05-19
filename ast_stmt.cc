@@ -69,6 +69,12 @@ void StmtBlock::PrintChildren(int indentLevel) {
     stmts->PrintAll(indentLevel+1);
 }
 
+llvm::Value *StmtBlock::Emit() {
+  // TODO Need to figure out the logic for this.
+  return NULL;
+}
+
+
 DeclStmt::DeclStmt(Decl *d) {
     Assert(d != NULL);
     (decl=d)->SetParent(this);
@@ -78,10 +84,21 @@ void DeclStmt::PrintChildren(int indentLevel) {
     decl->Print(indentLevel+1);
 }
 
+llvm::Value *DeclStmt::Emit() {
+  decl->Emit();
+  return NULL;
+}
+
 ConditionalStmt::ConditionalStmt(Expr *t, Stmt *b) { 
     Assert(t != NULL && b != NULL);
     (test=t)->SetParent(this); 
     (body=b)->SetParent(this);
+}
+
+llvm::Value *ConditionalStmt::Emit() {
+  test->Emit();
+  body->Emit();
+  return NULL;
 }
 
 ForStmt::ForStmt(Expr *i, Expr *t, Expr *s, Stmt *b): LoopStmt(t, b) { 
@@ -100,9 +117,19 @@ void ForStmt::PrintChildren(int indentLevel) {
     body->Print(indentLevel+1, "(body) ");
 }
 
+llvm::Value *ForStmt::Emit() {
+    //TODO Logic for this is intense
+    return NULL;
+}
+
 void WhileStmt::PrintChildren(int indentLevel) {
     test->Print(indentLevel+1, "(test) ");
     body->Print(indentLevel+1, "(body) ");
+}
+
+llvm::Value *WhileStmt::Emit() {
+    //TODO Logic for this is intense
+    return NULL;
 }
 
 IfStmt::IfStmt(Expr *t, Stmt *tb, Stmt *eb): ConditionalStmt(t, tb) { 
@@ -117,6 +144,10 @@ void IfStmt::PrintChildren(int indentLevel) {
     if (elseBody) elseBody->Print(indentLevel+1, "(else) ");
 }
 
+llvm::Value *IfStmt::Emit() {
+    //TODO Logic for this is intense
+    return NULL;
+}
 
 ReturnStmt::ReturnStmt(yyltype loc, Expr *e) : Stmt(loc) { 
     expr = e;
@@ -126,6 +157,17 @@ ReturnStmt::ReturnStmt(yyltype loc, Expr *e) : Stmt(loc) {
 void ReturnStmt::PrintChildren(int indentLevel) {
     if ( expr ) 
       expr->Print(indentLevel+1);
+}
+
+llvm::Value *ReturnStmt::Emit() {
+// TODO
+//    if( expr ) {
+//        llvm::Value *retV = expr->Emit();
+//        llvm::ReturnInst::Create(*(irgen->GetContext()),retV,irgen->GetBasicBlock());
+//    } else {
+//        llvm::ReturnInst::Create(*(irgen->GetContext()),irgen->GetBasicBlock());
+//    }
+//    return NULL;
 }
 
 SwitchLabel::SwitchLabel(Expr *l, Stmt *s) {
@@ -157,5 +199,15 @@ void SwitchStmt::PrintChildren(int indentLevel) {
     if (expr) expr->Print(indentLevel+1);
     if (cases) cases->PrintAll(indentLevel+1);
     if (def) def->Print(indentLevel+1);
+}
+
+llvm::Value *BreakStmt::Emit() {
+  llvm::BranchInst::Create(brstk->back(),irgen->GetBasicBlock());
+  return NULL;
+}
+
+llvm::Value *ContinueStmt::Emit() {
+  llvm::BranchInst::Create(contstk->back(),irgen->GetBasicBlock());
+  return NULL;
 }
 

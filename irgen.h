@@ -12,10 +12,10 @@
 #define _H_IRGen
 
 // LLVM headers
-#include "llvm/IR/Module.h"
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/Constants.h"
+#include "llvm/lib/IR/Module.h"
+#include "llvm/lib/IR/LLVMContext.h"
+#include "llvm/lib/IR/Instructions.h"
+#include "llvm/lib/IR/Constants.h"
 
 class IRGenerator {
   public:
