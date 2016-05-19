@@ -24,218 +24,218 @@ class Expr;
 
 class IntConstant;
 
-void yyerror(const char *msg);
+void yyerror (const char *msg);
 
 class Program : public Node {
-protected:
-    List<Decl *> *decls;
+ protected:
+  List<Decl *> *decls;
 
-public:
-    Program(List<Decl *> *declList);
+ public:
+  Program (List<Decl *> *declList);
 
-    const char *GetPrintNameForNode() { return "Program"; }
+  const char *GetPrintNameForNode () { return "Program"; }
 
-    void PrintChildren(int indentLevel);
+  void PrintChildren (int indentLevel);
 
-    virtual void Emit();
+  virtual void Emit ();
 };
 
 class Stmt : public Node {
-public:
-    Stmt() : Node() { }
+ public:
+  Stmt () : Node () { }
 
-    Stmt(yyltype loc) : Node(loc) { }
+  Stmt (yyltype loc) : Node (loc) { }
 
-    virtual llvm::Value *Emit() { }
+  virtual llvm::Value *Emit () = 0;
 };
 
 class StmtBlock : public Stmt {
-protected:
-    List<VarDecl *> *decls;
-    List<Stmt *> *stmts;
+ protected:
+  List<VarDecl *> *decls;
+  List<Stmt *> *stmts;
 
-public:
-    StmtBlock(List<VarDecl *> *variableDeclarations, List<Stmt *> *statements);
+ public:
+  StmtBlock (List<VarDecl *> *variableDeclarations, List<Stmt *> *statements);
 
-    const char *GetPrintNameForNode() { return "StmtBlock"; }
+  const char *GetPrintNameForNode () { return "StmtBlock"; }
 
-    void PrintChildren(int indentLevel);
+  void PrintChildren (int indentLevel);
 
-    llvm::Value *Emit();
+  llvm::Value *Emit ();
 };
 
 class DeclStmt : public Stmt {
-protected:
-    Decl *decl;
+ protected:
+  Decl *decl;
 
-public:
-    DeclStmt(Decl *d);
+ public:
+  DeclStmt (Decl *d);
 
-    const char *GetPrintNameForNode() { return "DeclStmt"; }
+  const char *GetPrintNameForNode () { return "DeclStmt"; }
 
-    void PrintChildren(int indentLevel);
+  void PrintChildren (int indentLevel);
 
-    llvm::Value *Emit();
+  llvm::Value *Emit ();
 };
 
 class ConditionalStmt : public Stmt {
-protected:
-    Expr *test;
-    Stmt *body;
+ protected:
+  Expr *test;
+  Stmt *body;
 
-public:
-    ConditionalStmt() : Stmt(), test(NULL), body(NULL) { }
+ public:
+  ConditionalStmt () : Stmt (), test (NULL), body (NULL) { }
 
-    ConditionalStmt(Expr *testExpr, Stmt *body);
+  ConditionalStmt (Expr *testExpr, Stmt *body);
 
-    llvm::Value *Emit();
+  llvm::Value *Emit ();
 };
 
 class LoopStmt : public ConditionalStmt {
-public:
-    LoopStmt(Expr *testExpr, Stmt *body)
-            : ConditionalStmt(testExpr, body) { }
+ public:
+  LoopStmt (Expr *testExpr, Stmt *body)
+      : ConditionalStmt (testExpr, body) { }
 };
 
 class ForStmt : public LoopStmt {
-protected:
-    Expr *init, *step;
+ protected:
+  Expr *init, *step;
 
-public:
-    ForStmt(Expr *init, Expr *test, Expr *step, Stmt *body);
+ public:
+  ForStmt (Expr *init, Expr *test, Expr *step, Stmt *body);
 
-    const char *GetPrintNameForNode() { return "ForStmt"; }
+  const char *GetPrintNameForNode () { return "ForStmt"; }
 
-    void PrintChildren(int indentLevel);
+  void PrintChildren (int indentLevel);
 
-    llvm::Value *Emit();
+  llvm::Value *Emit ();
 };
 
 class WhileStmt : public LoopStmt {
-public:
-    WhileStmt(Expr *test, Stmt *body) : LoopStmt(test, body) { }
+ public:
+  WhileStmt (Expr *test, Stmt *body) : LoopStmt (test, body) { }
 
-    const char *GetPrintNameForNode() { return "WhileStmt"; }
+  const char *GetPrintNameForNode () { return "WhileStmt"; }
 
-    void PrintChildren(int indentLevel);
+  void PrintChildren (int indentLevel);
 
-    llvm::Value *Emit();
+  llvm::Value *Emit ();
 };
 
 class IfStmt : public ConditionalStmt {
-protected:
-    Stmt *elseBody;
+ protected:
+  Stmt *elseBody;
 
-public:
-    IfStmt() : ConditionalStmt(), elseBody(NULL) { }
+ public:
+  IfStmt () : ConditionalStmt (), elseBody (NULL) { }
 
-    IfStmt(Expr *test, Stmt *thenBody, Stmt *elseBody);
+  IfStmt (Expr *test, Stmt *thenBody, Stmt *elseBody);
 
-    const char *GetPrintNameForNode() { return "IfStmt"; }
+  const char *GetPrintNameForNode () { return "IfStmt"; }
 
-    void PrintChildren(int indentLevel);
+  void PrintChildren (int indentLevel);
 
-    llvm::Value *Emit();
+  llvm::Value *Emit ();
 };
 
 class IfStmtExprError : public IfStmt {
-public:
-    IfStmtExprError() : IfStmt() { yyerror(this->GetPrintNameForNode()); }
+ public:
+  IfStmtExprError () : IfStmt () { yyerror (this->GetPrintNameForNode ()); }
 
-    const char *GetPrintNameForNode() { return "IfStmtExprError"; }
+  const char *GetPrintNameForNode () { return "IfStmtExprError"; }
 };
 
 class BreakStmt : public Stmt {
-public:
-    BreakStmt(yyltype loc) : Stmt(loc) { }
+ public:
+  BreakStmt (yyltype loc) : Stmt (loc) { }
 
-    const char *GetPrintNameForNode() { return "BreakStmt"; }
+  const char *GetPrintNameForNode () { return "BreakStmt"; }
 
-    llvm::Value *Emit();
+  llvm::Value *Emit ();
 };
 
 class ContinueStmt : public Stmt {
-public:
-    ContinueStmt(yyltype loc) : Stmt(loc) { }
+ public:
+  ContinueStmt (yyltype loc) : Stmt (loc) { }
 
-    const char *GetPrintNameForNode() { return "ContinueStmt"; }
+  const char *GetPrintNameForNode () { return "ContinueStmt"; }
 
-    llvm::Value *Emit();
+  llvm::Value *Emit ();
 };
 
 class ReturnStmt : public Stmt {
-protected:
-    Expr *expr;
+ protected:
+  Expr *expr;
 
-public:
-    ReturnStmt(yyltype loc, Expr *expr = NULL);
+ public:
+  ReturnStmt (yyltype loc, Expr *expr = NULL);
 
-    const char *GetPrintNameForNode() { return "ReturnStmt"; }
+  const char *GetPrintNameForNode () { return "ReturnStmt"; }
 
-    void PrintChildren(int indentLevel);
+  void PrintChildren (int indentLevel);
 
-    llvm::Value *Emit();
+  llvm::Value *Emit ();
 };
 
 class SwitchLabel : public Stmt {
-protected:
-    Expr *label;
-    Stmt *stmt;
+ protected:
+  Expr *label;
+  Stmt *stmt;
 
-public:
-    SwitchLabel() {
-        label = NULL;
-        stmt = NULL;
-    }
+ public:
+  SwitchLabel () {
+    label = NULL;
+    stmt = NULL;
+  }
 
-    SwitchLabel(Expr *label, Stmt *stmt);
+  SwitchLabel (Expr *label, Stmt *stmt);
 
-    SwitchLabel(Stmt *stmt);
+  SwitchLabel (Stmt *stmt);
 
-    void PrintChildren(int indentLevel);
+  void PrintChildren (int indentLevel);
 
-    llvm::Value *Emit();
+  llvm::Value *Emit ();
 };
 
 class Case : public SwitchLabel {
-public:
-    Case() : SwitchLabel() { }
+ public:
+  Case () : SwitchLabel () { }
 
-    Case(Expr *label, Stmt *stmt) : SwitchLabel(label, stmt) { }
+  Case (Expr *label, Stmt *stmt) : SwitchLabel (label, stmt) { }
 
-    const char *GetPrintNameForNode() { return "Case"; }
+  const char *GetPrintNameForNode () { return "Case"; }
 };
 
 class Default : public SwitchLabel {
-public:
-    Default(Stmt *stmt) : SwitchLabel(stmt) { }
+ public:
+  Default (Stmt *stmt) : SwitchLabel (stmt) { }
 
-    const char *GetPrintNameForNode() { return "Default"; }
+  const char *GetPrintNameForNode () { return "Default"; }
 };
 
 class SwitchStmt : public Stmt {
-protected:
-    Expr *expr;
-    List<Stmt *> *cases;
-    Default *def;
+ protected:
+  Expr *expr;
+  List<Stmt *> *cases;
+  Default *def;
 
-public:
-    SwitchStmt() : expr(NULL), cases(NULL), def(NULL) { }
+ public:
+  SwitchStmt () : expr (NULL), cases (NULL), def (NULL) { }
 
-    SwitchStmt(Expr *expr, List<Stmt *> *cases, Default *def);
+  SwitchStmt (Expr *expr, List<Stmt *> *cases, Default *def);
 
-    virtual const char *GetPrintNameForNode() { return "SwitchStmt"; }
+  virtual const char *GetPrintNameForNode () { return "SwitchStmt"; }
 
-    void PrintChildren(int indentLevel);
+  void PrintChildren (int indentLevel);
 
-    llvm::Value *Emit();
+  llvm::Value *Emit ();
 };
 
 class SwitchStmtError : public SwitchStmt {
-public:
-    SwitchStmtError(const char *msg) { yyerror(msg); }
+ public:
+  SwitchStmtError (const char *msg) { yyerror (msg); }
 
-    const char *GetPrintNameForNode() { return "SwitchStmtError"; }
+  const char *GetPrintNameForNode () { return "SwitchStmtError"; }
 };
 
 #endif

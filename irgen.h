@@ -12,40 +12,46 @@
 #define _H_IRGen
 
 // LLVM headers
-#include "llvm/lib/IR/Module.h"
-#include "llvm/lib/IR/LLVMContext.h"
-#include "llvm/lib/IR/Instructions.h"
-#include "llvm/lib/IR/Constants.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Constants.h"
 
 class IRGenerator {
-  public:
-    IRGenerator();
-    ~IRGenerator();
+ public:
+  IRGenerator ();
+  ~IRGenerator ();
 
-    llvm::Module   *GetOrCreateModule(const char *moduleID);
-    llvm::LLVMContext *GetContext() const { return context; }
+  llvm::Module *GetOrCreateModule (const char *moduleID);
+  llvm::LLVMContext *GetContext () const { return context; }
 
-    // Add your helper functions here
-    llvm::Function *GetFunction() const;
-    void      SetFunction(llvm::Function *func);
+  // Add your helper functions here
+  llvm::Function *GetFunction () const;
+  void SetFunction (llvm::Function *func);
 
-    llvm::BasicBlock *GetBasicBlock() const;
-    void        SetBasicBlock(llvm::BasicBlock *bb);
+  llvm::BasicBlock *GetBasicBlock () const;
+  void SetBasicBlock (llvm::BasicBlock *bb);
 
-    llvm::Type *GetIntType() const;
-    llvm::Type *GetBoolType() const;
-    llvm::Type *GetFloatType() const;
+  llvm::Type *GetIntType () const;
+  llvm::Type *GetBoolType () const;
+  llvm::Type *GetFloatType () const;
+  llvm::Type *GetVec2Type () const;
+  llvm::Type *GetVec3Type () const;
+  llvm::Type *GetVec4Type () const;
+  llvm::Type *GetMat2Type () const;
+  llvm::Type *GetMat3Type () const;
+  llvm::Type *GetMat4Type () const;
 
-  private:
-    llvm::LLVMContext *context;
-    llvm::Module      *module;
+ private:
+  llvm::LLVMContext *context;
+  llvm::Module *module;
 
-    // track which function or basic block is active
-    llvm::Function    *currentFunc;
-    llvm::BasicBlock  *currentBB;
+  // track which function or basic block is active
+  llvm::Function *currentFunc;
+  llvm::BasicBlock *currentBB;
 
-    static const char *TargetTriple;
-    static const char *TargetLayout;
+  static const char *TargetTriple;
+  static const char *TargetLayout;
 };
 
 #endif

@@ -18,75 +18,98 @@
 #include "ast_expr.h"
 
 class Type;
+
 class TypeQualifier;
+
 class NamedType;
+
 class Identifier;
+
 class Stmt;
 
-void yyerror(const char *msg);
+void yyerror (const char *msg);
 
-class Decl : public Node 
-{
-  protected:
-    Identifier *id;
-  
-  public:
-    Decl() : id(NULL) {}
-    Decl(Identifier *name);
-    Identifier *GetIdentifier() const { return id; }
-    friend ostream& operator<<(ostream& out, Decl *d) { return out << d->id; }
+class Decl : public Node {
+ protected:
+  Identifier *id;
 
+ public:
+  Decl () : id (NULL) { }
+
+  Decl (Identifier *name);
+
+  Identifier *GetIdentifier () const { return id; }
+
+  friend ostream &operator<< (ostream &out, Decl *d) { return out << d->id; }
+
+  virtual void Emit () = 0;
 };
 
-class VarDecl : public Decl 
-{
-  protected:
-    Type *type;
-    TypeQualifier *typeq;
-    Expr *assignTo;
-    
-  public:
-    VarDecl() : type(NULL), typeq(NULL), assignTo(NULL) {}
-    VarDecl(Identifier *name, Type *type, Expr *assignTo = NULL);
-    VarDecl(Identifier *name, TypeQualifier *typeq, Expr *assignTo = NULL);
-    VarDecl(Identifier *name, Type *type, TypeQualifier *typeq, Expr *assignTo = NULL);
-    const char *GetPrintNameForNode() { return "VarDecl"; }
-    void PrintChildren(int indentLevel);
-    Type *GetType() const { return type; }
+class VarDecl : public Decl {
+ protected:
+  Type *type;
+  TypeQualifier *typeq;
+  Expr *assignTo;
+
+ public:
+  VarDecl () : type (NULL), typeq (NULL), assignTo (NULL) { }
+
+  VarDecl (Identifier *name, Type *type, Expr *assignTo = NULL);
+
+  VarDecl (Identifier *name, TypeQualifier *typeq, Expr *assignTo = NULL);
+
+  VarDecl (Identifier *name, Type *type, TypeQualifier *typeq, Expr *assignTo = NULL);
+
+  const char *GetPrintNameForNode () { return "VarDecl"; }
+
+  void PrintChildren (int indentLevel);
+
+  Type *GetType () const { return type; }
+
+  void Emit ();
 };
 
-class VarDeclError : public VarDecl
-{
-  public:
-    VarDeclError() : VarDecl() { yyerror(this->GetPrintNameForNode()); };
-    const char *GetPrintNameForNode() { return "VarDeclError"; }
+class VarDeclError : public VarDecl {
+ public:
+  VarDeclError () : VarDecl () { yyerror (this->GetPrintNameForNode ()); };
+
+  const char *GetPrintNameForNode () { return "VarDeclError"; }
+
+  void Emit ();
 };
 
-class FnDecl : public Decl 
-{
-  protected:
-    List<VarDecl*> *formals;
-    Type *returnType;
-    TypeQualifier *returnTypeq;
-    Stmt *body;
-    
-  public:
-    FnDecl() : Decl(), formals(NULL), returnType(NULL), returnTypeq(NULL), body(NULL) {}
-    FnDecl(Identifier *name, Type *returnType, List<VarDecl*> *formals);
-    FnDecl(Identifier *name, Type *returnType, TypeQualifier *returnTypeq, List<VarDecl*> *formals);
-    void SetFunctionBody(Stmt *b);
-    const char *GetPrintNameForNode() { return "FnDecl"; }
-    void PrintChildren(int indentLevel);
+class FnDecl : public Decl {
+ protected:
+  List<VarDecl *> *formals;
+  Type *returnType;
+  TypeQualifier *returnTypeq;
+  Stmt *body;
 
-    Type *GetType() const { return returnType; }
-    List<VarDecl*> *GetFormals() {return formals;}
+ public:
+  FnDecl () : Decl (), formals (NULL), returnType (NULL), returnTypeq (NULL), body (NULL) { }
+
+  FnDecl (Identifier *name, Type *returnType, List<VarDecl *> *formals);
+
+  FnDecl (Identifier *name, Type *returnType, TypeQualifier *returnTypeq, List<VarDecl *> *formals);
+
+  void SetFunctionBody (Stmt *b);
+
+  const char *GetPrintNameForNode () { return "FnDecl"; }
+
+  void PrintChildren (int indentLevel);
+
+  Type *GetType () const { return returnType; }
+
+  List<VarDecl *> *GetFormals () { return formals; }
+
+  void Emit ();
 };
 
-class FormalsError : public FnDecl
-{
-  public:
-    FormalsError() : FnDecl() { yyerror(this->GetPrintNameForNode()); }
-    const char *GetPrintNameForNode() { return "FormalsError"; }
+class FormalsError : public FnDecl {
+ public:
+  FormalsError () : FnDecl () { yyerror (this->GetPrintNameForNode ()); }
+
+  const char *GetPrintNameForNode () { return "FormalsError"; }
 };
 
 #endif
