@@ -182,3 +182,7 @@ llvm::Value *PostfixExpr::Emit () {
 llvm::Value *FieldAccess::Emit () {
   // TODO Help
 }
+
+llvm::Value *RelationalExpr::Emit() {
+
+}
