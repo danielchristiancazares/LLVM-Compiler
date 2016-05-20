@@ -5,7 +5,7 @@
 #include "ast_decl.h"
 #include "ast_type.h"
 #include "ast_stmt.h"
-#include "symtable.h"        
+#include "symtable.h"
 
 Decl::Decl (Identifier *n) : Node (*n->GetLocation ()) {
   Assert(n != NULL);
@@ -41,7 +41,27 @@ void VarDecl::PrintChildren (int indentLevel) {
 }
 
 void VarDecl::Emit () {
-  // TODO
+  llvm::Value *value = NULL;
+  char *name;
+  for (vector < map < string, DeclAssoc > > ::iterator it = this->symTable.begin (); it != this->symTable.end ();
+  ++it) {
+    if(it->first == this->GetIdentifier ()->GetName ()) {
+      DeclAssoc declAssoc = it->first->find (this->GetIdentifier ()->GetName ())->second;
+      value = declAssoc.value;
+      name = declAssoc.decl->GetIdentifier ()->GetName ();
+    }
+  }
+
+  llvm::Constant *constant = this->assignTo != NULL ? value
+                                                    : llvm::Constant::getNullValue;
+
+  llvm::GlobalVariable globalVariable = new llvm::GlobalVariable (Node::irgen->GetOrCreateModule ("irgen.bc"),
+                                                                  this->typeq,
+                                                                  llvm::GlobalVariable::ExternalLinkage,
+                                                                  constant, name,
+                                                                  nullptr,
+                                                                  NotThreadLocal,
+                                                                  0, false);
 }
 
 FnDecl::FnDecl (Identifier *n, Type *r, List<VarDecl *> *d) : Decl (n) {

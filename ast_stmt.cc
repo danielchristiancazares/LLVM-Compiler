@@ -23,44 +23,40 @@ void Program::PrintChildren (int indentLevel) {
 }
 
 void Program::Emit () {
-  // TODO:
-  // This is just a reference for you to get started
-  //
-  // You can use this as a template and create Emit() function
-  // for individual node to fill in the module structure and instructions.
-
-  /*
-   * We've already declared a static global IRGenerator in ast.cc
-   */
-  //IRGenerator irgen;
-
-  /*
-   * Must GetOrCreate the same name when referencing the global IRGenerator still
-   */
+  if(decls->NumElements () <= 0) {
+    return;
+  }
   llvm::Module *mod = irgen->GetOrCreateModule ("irgen.bc");
 
-  // create a function signature
+  for (int i = 0; i < decls->NumElements (); ++i) {
+    Decl* decl = decls->Nth (i);
+    decl->Emit ();
+  }
+
+
+
+// create a function signature
 //    std::vector<llvm::Type *> argTypes;
 //    llvm::Type *intTy = irgen.GetIntType();
 //    argTypes.push_back(intTy);
 //    llvm::ArrayRef<llvm::Type *> argArray(argTypes);
 //    llvm::FunctionType *funcTy = llvm::FunctionType::get(intTy, argArray, false);
 
-  // llvm::Function *f = llvm::cast<llvm::Function>(mod->getOrInsertFunction("foo", intTy, intTy, (Type *)0));
+// llvm::Function *f = llvm::cast<llvm::Function>(mod->getOrInsertFunction("foo", intTy, intTy, (Type *)0));
 //    llvm::Function *f = llvm::cast<llvm::Function>(mod->getOrInsertFunction("Name_the_function", funcTy));
 //    llvm::Argument *arg = f->arg_begin();
 //    arg->setName("x");
 
-  // insert a block into the runction
+// insert a block into the runction
 //    llvm::LLVMContext *context = irgen.GetContext();
 //    llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "entry", f);
 
-  // create a return instruction
+// create a return instruction
 //    llvm::Value *val = llvm::ConstantInt::get(intTy, 1);
 //    llvm::Value *sum = llvm::BinaryOperator::CreateAdd(arg, val, "", bb);
 //    llvm::ReturnInst::Create(*context, sum, bb);
 
-  // write the BC into standard output
+// write the BC into standard output
 //    llvm::WriteBitcodeToFile(mod, llvm::outs());
 }
 
@@ -214,11 +210,14 @@ llvm::Value *SwitchStmt::Emit () {
 }
 
 llvm::Value *BreakStmt::Emit () {
+  //TODO Create a BasicBlock within SwitchStmt to declare whether or not
+  //TODO to exit.
 //  llvm::BranchInst::Create (????, irgen->GetBasicBlock ());
   return NULL;
 }
 
 llvm::Value *ContinueStmt::Emit () {
+  //TODO Same as above.
 //  llvm::BranchInst::Create (?????, irgen->GetBasicBlock ());
   return NULL;
 }
