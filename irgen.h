@@ -30,7 +30,7 @@ class IRGenerator {
   // Add your helper functions here
   llvm::Function *GetFunction () const;
   void SetFunction (llvm::Function *func);
-  llvm::Type Converter(Type);
+  llvm::Type Converter(Type::Type);
 
   llvm::BasicBlock *GetBasicBlock () const;
   void SetBasicBlock (llvm::BasicBlock *bb);
