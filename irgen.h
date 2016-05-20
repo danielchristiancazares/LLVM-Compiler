@@ -12,12 +12,11 @@
 #define _H_IRGen
 
 // LLVM headers
-#include "ast_type.h"
-
 #include "llvm/IR/Module.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Constants.h"
+class Type;
 
 class IRGenerator {
  public:
@@ -30,7 +29,7 @@ class IRGenerator {
   // Add your helper functions here
   llvm::Function *GetFunction () const;
   void SetFunction (llvm::Function *func);
-  llvm::Type Converter(Type::Type);
+  llvm::Type *Converter(Type*);
 
   llvm::BasicBlock *GetBasicBlock () const;
   void SetBasicBlock (llvm::BasicBlock *bb);

@@ -4,6 +4,7 @@
  */
 
 #include "irgen.h"
+#include "ast_type.h"
 
 IRGenerator::IRGenerator () :
     context (NULL),
@@ -14,6 +15,7 @@ IRGenerator::IRGenerator () :
 
 IRGenerator::~IRGenerator () {
 }
+
 
 llvm::Type *IRGenerator::Converter(Type astTy) {
   llvm::Type *ty = NULL;

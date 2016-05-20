@@ -16,6 +16,8 @@
 #include "ast.h"
 #include "list.h"
 #include "ast_expr.h"
+#include "irgen.h"
+
 
 class Type;
 

@@ -15,7 +15,8 @@ using namespace std;
 
 struct DeclAssoc {
 	bool isGlobal;
-	map<Decl*, llvm::Value*> declVals;
+	Decl* decl;
+	llvm::Value* value;
 };
 
 class SymbolTable {

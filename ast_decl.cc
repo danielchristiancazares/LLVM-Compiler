@@ -6,6 +6,7 @@
 #include "ast_type.h"
 #include "ast_stmt.h"
 #include "symtable.h"
+#include "irgen.h"
 
 Decl::Decl (Identifier *n) : Node (*n->GetLocation ()) {
   Assert(n != NULL);
@@ -43,25 +44,35 @@ void VarDecl::PrintChildren (int indentLevel) {
 void VarDecl::Emit () {
   llvm::Value *value = NULL;
   char *name;
-  for (vector < map < string, DeclAssoc > > ::iterator it = this->symTable.begin (); it != this->symTable.end ();
+  bool isConstant;
+
+  for (vector < map < string, DeclAssoc > >::iterator it = Node::symtable->symTable.begin(); it != Node::symtable->symTable.end();
   ++it) {
-    if(it->first == this->GetIdentifier ()->GetName ()) {
-      DeclAssoc declAssoc = it->first->find (this->GetIdentifier ()->GetName ())->second;
-      value = declAssoc.value;
-      name = declAssoc.decl->GetIdentifier ()->GetName ();
+    if(it->find(this->GetIdentifier()->GetName()) != it->end()) {
+          DeclAssoc declAssoc = it->find(this->GetIdentifier()->GetName())->second;
+          value = declAssoc.value;
+          name = declAssoc.decl->GetIdentifier()->GetName();
     }
   }
+  
+  if(this->typeq->constTypeQualifier != NULL) {
+    isConstant = true;
+  }
+  else {
+    isConstant = false;
+  }
 
-  llvm::Constant *constant = this->assignTo != NULL ? value
-                                                    : llvm::Constant::getNullValue;
-
-  llvm::GlobalVariable globalVariable = new llvm::GlobalVariable (Node::irgen->GetOrCreateModule ("irgen.bc"),
-                                                                  this->typeq,
+  llvm::Type *type = Node::irgen->Converter(this->type);
+  llvm::Constant *constant = this->assignTo != NULL ? llvm::cast<llvm::Constant>(this->assignTo->Emit())
+                                                    : llvm::Constant::getNullValue(type);
+  llvm::GlobalVariable *InsertBefore = NULL;
+  llvm::GlobalVariable::ThreadLocalMode *thread = NotThreadLocal;
+  
+  new llvm::GlobalVariable (*(Node::irgen->GetOrCreateModule("irgen.bc")),
+                                                                  type,
+								  isConstant,
                                                                   llvm::GlobalVariable::ExternalLinkage,
-                                                                  constant, name,
-                                                                  nullptr,
-                                                                  NotThreadLocal,
-                                                                  0, false);
+                                                                  constant, llvm::Twine(name), InsertBefore, thread, 0, false);
 }
 
 FnDecl::FnDecl (Identifier *n, Type *r, List<VarDecl *> *d) : Decl (n) {
