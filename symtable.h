@@ -26,8 +26,4 @@ class SymbolTable {
 		bool returnIsSeen;
 		Type *returnType;
 		void PrintTable();
-
-		SymbolTable() {
-			loopCounter = 0;
-		}
 };
