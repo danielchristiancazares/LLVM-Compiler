@@ -14,20 +14,21 @@
 using namespace std;
 
 struct DeclAssoc {
-	bool isGlobal;
-	map<Decl*, llvm::Value*> declVals;
+    bool isGlobal;
+    Decl *decl;
+    llvm::Value* value;
 };
 
 class SymbolTable {
-	public:
-		vector< map<string, DeclAssoc> > symTable;
-		int loopCounter;
-		bool insideSwitch;
-		bool returnIsSeen;
-		Type *returnType;
-		void PrintTable();
+ public:
+  vector <map<string, DeclAssoc>> symTable;
+  int loopCounter;
+  bool insideSwitch;
+  bool returnIsSeen;
+  Type *returnType;
+  void PrintTable ();
 
-		SymbolTable() {
-			loopCounter = 0;
-		}
+  SymbolTable () {
+    loopCounter = 0;
+  }
 };
