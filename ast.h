@@ -84,6 +84,7 @@ class Node {
   void Print (int indentLevel, const char *label = NULL);
 
   virtual void PrintChildren (int indentLevel) { }
+  virtual llvm::Value *Emit() { llvm::Value *ty = NULL; return ty; }
   
   };
 

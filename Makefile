@@ -48,7 +48,7 @@ YACCFLAGS = -dvty
 # YACCFLAGS = -dvty --report=all --report-file=y.debug
 
 # Link with standard C library, math library, and lex library
-LIBS = -lc -lm -ll `llvm-config --ldflags --libs`
+LIBS = -lc -lm -ll `llvm-config --ldflags --libs` 
 
 # Rules for various parts of the target
 

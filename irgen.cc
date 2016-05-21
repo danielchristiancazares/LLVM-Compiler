@@ -17,7 +17,7 @@ IRGenerator::~IRGenerator () {
 }
 
 
-llvm::Type *IRGenerator::Converter(Type astTy) {
+llvm::Type *IRGenerator::Converter(Type* astTy) {
   llvm::Type *ty = NULL;
   if ( astTy == Type::intType ) {
     ty = llvm::Type::getInt32Ty(*context);

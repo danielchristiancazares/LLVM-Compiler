@@ -29,6 +29,8 @@ class Identifier;
 
 class Stmt;
 
+class IRGenerator;
+
 void yyerror (const char *msg);
 
 class Decl : public Node {
@@ -43,8 +45,6 @@ class Decl : public Node {
   Identifier *GetIdentifier () const { return id; }
 
   friend ostream &operator<< (ostream &out, Decl *d) { return out << d->id; }
-
-  virtual void Emit () = 0;
 };
 
 class VarDecl : public Decl {
@@ -68,7 +68,7 @@ class VarDecl : public Decl {
 
   Type *GetType () const { return type; }
 
-  void Emit ();
+  llvm::Value *Emit ();
 };
 
 class VarDeclError : public VarDecl {
@@ -77,7 +77,7 @@ class VarDeclError : public VarDecl {
 
   const char *GetPrintNameForNode () { return "VarDeclError"; }
 
-  void Emit ();
+  llvm::Value *Emit ();
 };
 
 class FnDecl : public Decl {
@@ -104,7 +104,7 @@ class FnDecl : public Decl {
 
   List<VarDecl *> *GetFormals () { return formals; }
 
-  void Emit ();
+  llvm::Value *Emit();
 };
 
 class FormalsError : public FnDecl {

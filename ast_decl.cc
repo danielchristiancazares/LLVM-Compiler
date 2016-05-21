@@ -41,18 +41,39 @@ void VarDecl::PrintChildren (int indentLevel) {
   if(assignTo) { assignTo->Print (indentLevel + 1, "(initializer) "); }
 }
 
-void VarDecl::Emit () {
+llvm::Value *VarDecl::Emit () {
   llvm::Value *value = NULL;
   char *name;
   bool isConstant;
+  llvm::Constant *constant;
+  llvm::GlobalVariable *InsertBefore = NULL;
 
-  for (vector < map < string, DeclAssoc > >::iterator it = Node::symtable->symTable.begin(); it != Node::symtable->symTable.end();
-  ++it) {
-    if(it->find(this->GetIdentifier()->GetName()) != it->end()) {
-          DeclAssoc declAssoc = it->find(this->GetIdentifier()->GetName())->second;
-          value = declAssoc.value;
-          name = declAssoc.decl->GetIdentifier()->GetName();
+  if(Node::symtable->symTable.empty()) {
+    map<Decl*, DeclAssoc> newMap;
+
+    // gets llvm type
+    llvm::Type *type = Node::irgen->Converter(this->type);
+
+    // sets the constant
+    if(this->assignTo != NULL) {
+      constant = llvm::cast<llvm::Constant>(this->assignTo->Emit());
     }
+    else {
+      constant = llvm::Constant::getNullValue(type);
+    }
+
+    if(this->typeq->constTypeQualifier != NULL) {
+      isConstant = true;
+    }
+    else {
+      isConstant = false;
+    }
+
+    name = this->GetIdentifier()->GetName();
+
+    llvm::Module *mod = irgen->GetOrCreateModule("irgen.bc");
+
+    new llvm::GlobalVariable(*mod, type, isConstant, llvm::GlobalValue::ExternalLinkage, constant, name);
   }
   
   if(this->typeq->constTypeQualifier != NULL) {
@@ -62,17 +83,7 @@ void VarDecl::Emit () {
     isConstant = false;
   }
 
-  llvm::Type *type = Node::irgen->Converter(this->type);
-  llvm::Constant *constant = this->assignTo != NULL ? llvm::cast<llvm::Constant>(this->assignTo->Emit())
-                                                    : llvm::Constant::getNullValue(type);
-  llvm::GlobalVariable *InsertBefore = NULL;
-  llvm::GlobalVariable::ThreadLocalMode *thread = NotThreadLocal;
-  
-  new llvm::GlobalVariable (*(Node::irgen->GetOrCreateModule("irgen.bc")),
-                                                                  type,
-								  isConstant,
-                                                                  llvm::GlobalVariable::ExternalLinkage,
-                                                                  constant, llvm::Twine(name), InsertBefore, thread, 0, false);
+  return value;  
 }
 
 FnDecl::FnDecl (Identifier *n, Type *r, List<VarDecl *> *d) : Decl (n) {
@@ -102,6 +113,6 @@ void FnDecl::PrintChildren (int indentLevel) {
   if(body) { body->Print (indentLevel + 1, "(body) "); }
 }
 
-void FnDecl::Emit () {
+llvm::Value *FnDecl::Emit () {
   // TODO
 }

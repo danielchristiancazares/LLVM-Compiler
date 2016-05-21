@@ -22,12 +22,13 @@ void Program::PrintChildren (int indentLevel) {
   printf ("\n");
 }
 
-void Program::Emit () {
+llvm::Value *Program::Emit () {
   if(decls->NumElements () <= 0) {
-    return;
+    return NULL;
   }
-  llvm::Module *mod = irgen->GetOrCreateModule ("irgen.bc");
 
+  llvm::Module *mod = irgen->GetOrCreateModule ("irgen.bc");
+  
   for (int i = 0; i < decls->NumElements (); ++i) {
     Decl* decl = decls->Nth (i);
     decl->Emit ();
@@ -58,6 +59,7 @@ void Program::Emit () {
 
 // write the BC into standard output
 //    llvm::WriteBitcodeToFile(mod, llvm::outs());
+  return NULL;
 }
 
 StmtBlock::StmtBlock (List<VarDecl *> *d, List<Stmt *> *s) {

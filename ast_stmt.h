@@ -37,7 +37,8 @@ class Program : public Node {
 
   void PrintChildren (int indentLevel);
 
-  virtual void Emit ();
+  
+  virtual llvm::Value *Emit ();
 };
 
 class Stmt : public Node {
@@ -45,8 +46,6 @@ class Stmt : public Node {
   Stmt () : Node () { }
 
   Stmt (yyltype loc) : Node (loc) { }
-
-  virtual llvm::Value *Emit () = 0;
 };
 
 class StmtBlock : public Stmt {
