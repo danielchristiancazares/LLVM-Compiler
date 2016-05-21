@@ -46,42 +46,59 @@ llvm::Value *VarDecl::Emit () {
   char *name;
   bool isConstant;
   llvm::Constant *constant;
-  llvm::GlobalVariable *InsertBefore = NULL;
+  SymbolTable::DeclAssoc declassoc;
 
-  if(Node::symtable->symTable.empty()) {
-    map<Decl*, DeclAssoc> newMap;
+  // gets llvm type
+  llvm::Type *type = Node::irgen->Converter(this->type);
 
-    // gets llvm type
-    llvm::Type *type = Node::irgen->Converter(this->type);
-
-    // sets the constant
-    if(this->assignTo != NULL) {
-      constant = llvm::cast<llvm::Constant>(this->assignTo->Emit());
-    }
-    else {
-      constant = llvm::Constant::getNullValue(type);
-    }
-
-    if(this->typeq->constTypeQualifier != NULL) {
-      isConstant = true;
-    }
-    else {
-      isConstant = false;
-    }
-
-    name = this->GetIdentifier()->GetName();
-
-    llvm::Module *mod = irgen->GetOrCreateModule("irgen.bc");
-
-    new llvm::GlobalVariable(*mod, type, isConstant, llvm::GlobalValue::ExternalLinkage, constant, name);
+  // sets the constant
+  if(this->assignTo != NULL) {
+    constant = llvm::cast<llvm::Constant>(this->assignTo->Emit());
   }
-  
+  else {
+    constant = llvm::Constant::getNullValue(type);
+  }
+
   if(this->typeq->constTypeQualifier != NULL) {
     isConstant = true;
   }
   else {
     isConstant = false;
   }
+
+  name = this->GetIdentifier()->GetName();
+
+  llvm::Module *mod = irgen->GetOrCreateModule("irgen.bc");
+
+  if(Node::symtable->symTable.empty()) {
+    map<string, SymbolTable::DeclAssoc> newMap;
+    value = new llvm::GlobalVariable(*mod, type, isConstant, llvm::GlobalValue::ExternalLinkage, constant, name);
+    declassoc.value = value;
+    declassoc.decl = this;
+    declassoc.isGlobal = true;
+    newMap.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
+    Node::symtable->symTable.push_back(newMap);
+  } 
+  else {
+    map<string, SymbolTable::DeclAssoc> currentScope = Node::symtable->symTable.back();
+    Node::symtable->symTable.pop_back();
+    string currentVar = this->GetIdentifier()->GetName();
+
+    // checks if this is a global scope
+    SymbolTable::DeclAssoc currDeclAssoc = currentScope.begin()->second;
+    if(currDeclAssoc.isGlobal == true) {
+      value = new llvm::GlobalVariable(*mod, type, isConstant, llvm::GlobalValue::ExternalLinkage, constant, name);
+      declassoc.isGlobal = true;
+    }
+    else {
+      declassoc.isGlobal = false;
+    }
+    declassoc.value = value;
+    declassoc.decl = this;
+    currentScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
+    Node::symtable->symTable.push_back(currentScope);
+  }
+  
 
   return value;  
 }

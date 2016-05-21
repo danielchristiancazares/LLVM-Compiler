@@ -13,14 +13,15 @@
 
 using namespace std;
 
-struct DeclAssoc {
-	bool isGlobal;
-	Decl* decl;
-	llvm::Value* value;
-};
 
 class SymbolTable {
 	public:
+    struct DeclAssoc {
+      bool isGlobal;
+      Decl* decl;
+      llvm::Value* value;
+    };
+
 		vector< map<string, DeclAssoc> > symTable;
 		int loopCounter;
 		bool insideSwitch;
