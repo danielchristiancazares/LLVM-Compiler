@@ -51,64 +51,62 @@ class Decl;
 class Operator;
 
 typedef enum {
-      LookingForType,
-      LookingForVariable,
-      LookingForFunction
+    LookingForType,
+    LookingForVariable,
+    LookingForFunction
 } reasonT;
 
 class ReportError {
  public:
 
   // Errors used by scanner
-  static void UntermComment(); 
-  static void LongIdentifier(yyltype *loc, const char *ident);
-  static void UntermString(yyltype *loc, const char *str);
-  static void UnrecogChar(yyltype *loc, char ch);
+  static void UntermComment ();
+  static void LongIdentifier (yyltype *loc, const char *ident);
+  static void UntermString (yyltype *loc, const char *str);
+  static void UnrecogChar (yyltype *loc, char ch);
 
   // Errors used by semantic analyzer for declarations
-  static void DeclConflict(Decl *newDecl, Decl *prevDecl);
-  static void InvalidInitialization(Identifier *id, Type *lType, Type *rType);
-  
-  
+  static void DeclConflict (Decl *newDecl, Decl *prevDecl);
+  static void InvalidInitialization (Identifier *id, Type *lType, Type *rType);
+
   // Errors used by semantic analyzer for identifiers
-  static void IdentifierNotDeclared(Identifier *ident, reasonT whyNeeded);
+  static void IdentifierNotDeclared (Identifier *ident, reasonT whyNeeded);
 
   // Errors used by semantic analyzer for arrays
-  static void NotAnArray(Identifier *id);
-              
+  static void NotAnArray (Identifier *id);
+
   // Errors used by semantic analyzer for expressions
-  static void IncompatibleOperand(Operator *op, Type *rhs); // unary
-  static void IncompatibleOperands(Operator *op, Type *lhs, Type *rhs); // binary
+  static void IncompatibleOperand (Operator *op, Type *rhs); // unary
+  static void IncompatibleOperands (Operator *op, Type *lhs, Type *rhs); // binary
 
   // Errors used by semantic analyzer for function calls
-  static void ExtraFormals(Identifier *id, int expCount, int actualCount); 
-  static void LessFormals(Identifier *id, int expCount, int actualCount); 
-  static void FormalsTypeMismatch(Identifier *id, int pos, Type *expType, Type *actualType); 
-  static void NotAFunction(Identifier *id); 
-  
+  static void ExtraFormals (Identifier *id, int expCount, int actualCount);
+  static void LessFormals (Identifier *id, int expCount, int actualCount);
+  static void FormalsTypeMismatch (Identifier *id, int pos, Type *expType, Type *actualType);
+  static void NotAFunction (Identifier *id);
+
   // Errors used by semantic analyzer for vector access
-  static void InaccessibleSwizzle(Identifier *swizzle, Expr *base);
-  static void InvalidSwizzle(Identifier *swizzle, Expr *base);
-  static void SwizzleOutOfBound(Identifier *swizzle, Expr *base);
-  static void OversizedVector(Identifier *swizzle, Expr *base);
-  
+  static void InaccessibleSwizzle (Identifier *swizzle, Expr *base);
+  static void InvalidSwizzle (Identifier *swizzle, Expr *base);
+  static void SwizzleOutOfBound (Identifier *swizzle, Expr *base);
+  static void OversizedVector (Identifier *swizzle, Expr *base);
+
   // Errors used by semantic analyzer for control structures
-  static void TestNotBoolean(Expr *testExpr);
-  static void ReturnMismatch(ReturnStmt *rStmt, Type *given, Type *expected);
-  static void ReturnMissing(FnDecl *fnDecl);
-  static void BreakOutsideLoop(BreakStmt *bStmt); 
-  static void ContinueOutsideLoop(ContinueStmt *cStmt); 
+  static void TestNotBoolean (Expr *testExpr);
+  static void ReturnMismatch (ReturnStmt *rStmt, Type *given, Type *expected);
+  static void ReturnMissing (FnDecl *fnDecl);
+  static void BreakOutsideLoop (BreakStmt *bStmt);
+  static void ContinueOutsideLoop (ContinueStmt *cStmt);
 
   // Generic method to report a printf-style error message
-  static void Formatted(yyltype *loc, const char *format, ...);
-
+  static void Formatted (yyltype *loc, const char *format, ...);
 
   // Returns number of error messages printed
-  static int NumErrors() { return numErrors; }
-  
+  static int NumErrors () { return numErrors; }
+
  private:
-  static void UnderlineErrorInLine(const char *line, yyltype *pos);
-  static void OutputError(yyltype *loc, string msg);
+  static void UnderlineErrorInLine (const char *line, yyltype *pos);
+  static void OutputError (yyltype *loc, string msg);
   static int numErrors;
 };
 #endif

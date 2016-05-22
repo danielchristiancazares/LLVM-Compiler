@@ -9,8 +9,8 @@
 #include <string.h> // strdup
 #include <stdio.h>  // printf
 
-SymbolTable *Node::symtable = new SymbolTable();
-IRGenerator *Node::irgen = new IRGenerator();
+SymbolTable *Node::symtable = new SymbolTable ();
+IRGenerator *Node::irgen = new IRGenerator ();
 
 Node::Node (yyltype loc) {
   location = new yyltype (loc);

@@ -183,6 +183,6 @@ llvm::Value *FieldAccess::Emit () {
   // TODO Help
 }
 
-llvm::Value *RelationalExpr::Emit() {
+llvm::Value *RelationalExpr::Emit () {
 
 }

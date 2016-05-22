@@ -28,9 +28,9 @@ llvm::Value *Program::Emit () {
   }
 
   llvm::Module *mod = irgen->GetOrCreateModule ("irgen.bc");
-  
+
   for (int i = 0; i < decls->NumElements (); ++i) {
-    Decl* decl = decls->Nth (i);
+    Decl *decl = decls->Nth (i);
     decl->Emit ();
   }
 
@@ -85,12 +85,12 @@ llvm::Value *StmtBlock::Emit () {
     s->Emit()   
     Delete  scope 
   */
-    map<string, SymbolTable::DeclAssoc> newScope;
+  map <string, SymbolTable::DeclAssoc> newScope;
 
   return NULL;
 }
 
-llvm::Value *StmtBlock::EmitFromFunc() {
+llvm::Value *StmtBlock::EmitFromFunc () {
   return NULL;
 }
 

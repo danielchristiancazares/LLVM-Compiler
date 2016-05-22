@@ -18,7 +18,6 @@
 #include "ast_expr.h"
 #include "irgen.h"
 
-
 class Type;
 
 class TypeQualifier;
@@ -104,7 +103,7 @@ class FnDecl : public Decl {
 
   List<VarDecl *> *GetFormals () { return formals; }
 
-  llvm::Value *Emit();
+  llvm::Value *Emit ();
 };
 
 class FormalsError : public FnDecl {
