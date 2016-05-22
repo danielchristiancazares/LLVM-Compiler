@@ -61,6 +61,8 @@ class StmtBlock : public Stmt {
   void PrintChildren (int indentLevel);
 
   llvm::Value *Emit ();
+
+  llvm::Value *EmitFromFunc();
 };
 
 class DeclStmt : public Stmt {

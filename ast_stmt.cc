@@ -75,6 +75,22 @@ void StmtBlock::PrintChildren (int indentLevel) {
 
 llvm::Value *StmtBlock::Emit () {
   // TODO Need to figure out the logic for this.
+  /*
+    Get the current scope
+    For each  element in scope 
+    Create  local variable  (as in  VarDecl::Emit)
+    Pop the current scope
+    Create  new scope  
+    For each  statement 's' in  body  of  funcCon:    
+    s->Emit()   
+    Delete  scope 
+  */
+    map<string, SymbolTable::DeclAssoc> newScope;
+
+  return NULL;
+}
+
+llvm::Value *StmtBlock::EmitFromFunc() {
   return NULL;
 }
 
