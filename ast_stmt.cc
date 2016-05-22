@@ -28,9 +28,9 @@ llvm::Value *Program::Emit () {
   }
 
   llvm::Module *mod = irgen->GetOrCreateModule ("irgen.bc");
-  
+
   for (int i = 0; i < decls->NumElements (); ++i) {
-    Decl* decl = decls->Nth (i);
+    Decl *decl = decls->Nth (i);
     decl->Emit ();
   }
 
@@ -85,9 +85,13 @@ llvm::Value *StmtBlock::Emit () {
     s->Emit()   
     Delete  scope 
   */
+<<<<<<< HEAD
     // get formals for local variables
     map<string, SymbolTable::DeclAssoc> tempScope = Node::symtable->symTable.back();
     map<string, SymbolTable::DeclAssoc> newScope;
+=======
+  map <string, SymbolTable::DeclAssoc> newScope;
+>>>>>>> df915d86a66396f7587e1a61c4b2277606185e14
 
     FnDecl *f = dynamic_cast<FnDecl*>(tempScope.rbegin()->second.decl);
     if (f == NULL) {
@@ -115,6 +119,10 @@ llvm::Value *StmtBlock::Emit () {
 
     Node::symtable->symTable.pop_back();
 
+<<<<<<< HEAD
+=======
+llvm::Value *StmtBlock::EmitFromFunc () {
+>>>>>>> df915d86a66396f7587e1a61c4b2277606185e14
   return NULL;
 }
 

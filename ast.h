@@ -63,7 +63,6 @@ class Node {
   static IRGenerator *irgen;
   static SymbolTable *symtable;
 
-
  public:
   Node (yyltype loc);
 
@@ -84,9 +83,12 @@ class Node {
   void Print (int indentLevel, const char *label = NULL);
 
   virtual void PrintChildren (int indentLevel) { }
-  virtual llvm::Value *Emit() { llvm::Value *ty = NULL; return ty; }
-  
-  };
+  virtual llvm::Value *Emit () {
+    llvm::Value *ty = NULL;
+    return ty;
+  }
+
+};
 
 class Identifier : public Node {
  protected:

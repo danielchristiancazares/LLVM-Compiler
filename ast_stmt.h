@@ -37,7 +37,6 @@ class Program : public Node {
 
   void PrintChildren (int indentLevel);
 
-  
   virtual llvm::Value *Emit ();
 };
 
@@ -61,6 +60,11 @@ class StmtBlock : public Stmt {
   void PrintChildren (int indentLevel);
 
   llvm::Value *Emit ();
+<<<<<<< HEAD
+=======
+
+  llvm::Value *EmitFromFunc ();
+>>>>>>> df915d86a66396f7587e1a61c4b2277606185e14
 };
 
 class DeclStmt : public Stmt {
