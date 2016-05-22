@@ -85,13 +85,14 @@ llvm::Value *VarDecl::Emit () {
     string currentVar = this->GetIdentifier()->GetName();
 
     // checks if this is a global scope
-    SymbolTable::DeclAssoc currDeclAssoc = currentScope.begin()->second;
+    SymbolTable::DeclAssoc currDeclAssoc = currentScope.rbegin()->second;
     if(currDeclAssoc.isGlobal == true) {
       value = new llvm::GlobalVariable(*mod, type, isConstant, llvm::GlobalValue::ExternalLinkage, constant, name);
       declassoc.isGlobal = true;
     }
     else {
       declassoc.isGlobal = false;
+      value = new llvm::AllocaInst(type, name, irgen->GetBasicBlock());
     }
     declassoc.value = value;
     declassoc.decl = this;
@@ -99,7 +100,6 @@ llvm::Value *VarDecl::Emit () {
     Node::symtable->symTable.push_back(currentScope);
   }
   
-
   return value;  
 }
 
@@ -132,4 +132,49 @@ void FnDecl::PrintChildren (int indentLevel) {
 
 llvm::Value *FnDecl::Emit () {
   // TODO
+  // storing the return type
+  llvm::Type *returnType = irgen->Converter(this->returnType);
+
+  // argtypes
+  vector<llvm::Type*> argTypes;
+  llvm::Type *tempType;
+
+  //go through the formals
+  for (int i = 0; i < this->formals->NumElements(); i++) {
+    VarDecl *v = this->formals->Nth(i);
+    tempType = irgen->Converter(v->GetType());
+    argTypes.push_back(tempType);
+  }
+
+  // make an arrayRef
+  llvm::ArrayRef<llvm::Type*> argArray(argTypes);
+  llvm::FunctionType *funcTy = llvm::FunctionType::get(returnType, argArray, false);
+
+  // Create the function and insert it into module
+  string name = this->GetIdentifier()->GetName();
+  llvm::Module *mod = irgen->GetOrCreateModule("irgen.bc");
+  llvm::Function *f = llvm::cast<llvm::Function>(mod->getOrInsertFunction(name, funcTy));     
+
+  // starting to loop through function pointer
+  string argName;
+  llvm::Argument *arg = f->arg_begin();
+  for (int i = 0; i < this->formals->NumElements(); i++, arg++) {
+    VarDecl *v = this->formals->Nth(i);
+    argName = v->GetIdentifier()->GetName();
+    // set the name
+    arg->setName(argName);
+  }
+
+  // insert a block into the function
+  // create a basicBlock
+  llvm::LLVMContext *context = irgen->GetContext();
+  llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "entry", f, irgen->GetBasicBlock());
+
+  return f;
+
+// create a return instruction
+//    llvm::Value *val = llvm::ConstantInt::get(intTy, 1);
+//    llvm::Value *sum = llvm::BinaryOperator::CreateAdd(arg, val, "", bb);
+//    llvm::ReturnInst::Create(*context, sum, bb);
+
 }
