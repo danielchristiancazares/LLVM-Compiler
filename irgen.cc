@@ -16,31 +16,29 @@ IRGenerator::IRGenerator () :
 IRGenerator::~IRGenerator () {
 }
 
-
-llvm::Type *IRGenerator::Converter(Type* astTy) {
+llvm::Type *IRGenerator::Converter (Type *astTy) {
   llvm::Type *ty = NULL;
-  if ( astTy == Type::intType ) {
-    ty = llvm::Type::getInt32Ty(*context);
-  } else if ( astTy == Type::boolType ) {
-    ty = llvm::Type::getInt1Ty(*context);
-  } else if ( astTy == Type::floatType ) {
-    ty = llvm::Type::getFloatTy(*context);
-  } else if( astTy == Type::vec2Type ) {
+  if(astTy == Type::intType) {
+    ty = llvm::Type::getInt32Ty (*context);
+  } else if(astTy == Type::boolType) {
+    ty = llvm::Type::getInt1Ty (*context);
+  } else if(astTy == Type::floatType) {
+    ty = llvm::Type::getFloatTy (*context);
+  } else if(astTy == Type::vec2Type) {
     ty = llvm::VectorType::get (llvm::Type::getFloatTy (*context), 2);
-  } else if( astTy == Type::vec3Type ) {
+  } else if(astTy == Type::vec3Type) {
     ty = llvm::VectorType::get (llvm::Type::getFloatTy (*context), 3);
-  } else if( astTy == Type::vec4Type ) {
+  } else if(astTy == Type::vec4Type) {
     ty = llvm::VectorType::get (llvm::Type::getFloatTy (*context), 4);
-  } else if( astTy == Type::mat2Type ) {
+  } else if(astTy == Type::mat2Type) {
     ty = llvm::ArrayType::get (llvm::VectorType::get (llvm::Type::getFloatTy (*context), 2), 2);
-  } else if( astTy == Type::mat3Type ) {
+  } else if(astTy == Type::mat3Type) {
     ty = llvm::ArrayType::get (llvm::VectorType::get (llvm::Type::getFloatTy (*context), 3), 3);
-  } else if( astTy == Type::mat4Type ) {
+  } else if(astTy == Type::mat4Type) {
     ty = llvm::ArrayType::get (llvm::VectorType::get (llvm::Type::getFloatTy (*context), 4), 4);
   }
   return ty;
 }
-
 
 llvm::Module *IRGenerator::GetOrCreateModule (const char *moduleID) {
   if(module == NULL) {

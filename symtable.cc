@@ -5,7 +5,7 @@
 
 #include "symtable.h"
 
-void SymbolTable::PrintTable() {
+void SymbolTable::PrintTable () {
 //	int symbolCount = 0;
 //	int scopeCount = 0;
 //	for(vector< map<string, Decl*> >::iterator it = this->symTable.begin(); it != this->symTable.end(); ++it) {
