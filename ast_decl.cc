@@ -169,7 +169,7 @@ llvm::Value *FnDecl::Emit () {
   // create a basicBlock
   llvm::LLVMContext *context = irgen->GetContext();
   llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "entry", f, irgen->GetBasicBlock());
-  irge->SetBasicBlock(bb);
+  irgen->SetBasicBlock(bb);
 
   // inserting the function name to the current scope
   map<string, SymbolTable::DeclAssoc> currentScope = Node::symtable->symTable.back();
@@ -180,6 +180,7 @@ llvm::Value *FnDecl::Emit () {
   currentScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
   Node::symtable->symTable.push_back(currentScope);
   
+  /*
   // creating a new scope for the formals
   map<string, SymbolTable::DeclAssoc> newScope;
   for(int i = 0; i < this->formals->NumElements(); i++) {
@@ -188,11 +189,13 @@ llvm::Value *FnDecl::Emit () {
     tempType = irgen->Converter(v->GetType());
     declassoc.value = tempType;
     declassoc.decl = v;
+    declassoc.isGlobal = false;
     newScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
   }
   // pushing new scope
   Node::symtable->symTable.push_back(newScope);
-
+  */
+  
   StmtBlock *stmtblock = dynamic_cast<StmtBlock*>(this->body);
   stmtblock->Emit();
 

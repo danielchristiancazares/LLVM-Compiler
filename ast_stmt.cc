@@ -85,12 +85,36 @@ llvm::Value *StmtBlock::Emit () {
     s->Emit()   
     Delete  scope 
   */
+    // get formals for local variables
+    map<string, SymbolTable::DeclAssoc> tempScope = Node::symtable->symTable.back();
     map<string, SymbolTable::DeclAssoc> newScope;
 
-  return NULL;
-}
+    FnDecl *f = dynamic_cast<FnDecl*>(tempScope.rbegin()->second.decl);
+    if (f == NULL) {
+      cout << "SHIT IS NULL" << endl;
+    }
+    List<VarDecl*> *formalList = f->GetFormals();
+    string name;
+    SymbolTable::DeclAssoc declassoc;
 
-llvm::Value *StmtBlock::EmitFromFunc() {
+    for(int i = 0; i < formalList->NumElements(); i++) {
+      VarDecl *v = formalList->Nth(i);
+      llvm::Type *varType = irgen->Converter(v->GetType());
+      name = v->GetIdentifier()->GetName();
+      llvm::Value *value = new llvm::AllocaInst(varType, name, irgen->GetBasicBlock());
+      declassoc.decl = v;
+      declassoc.value = value;
+      newScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
+    }
+
+    Node::symtable->symTable.push_back(newScope);
+    for(int i  = 0; i < this->stmts->NumElements(); i++) {
+      Stmt *s = this->stmts->Nth(i);
+      s->Emit();
+    }
+
+    Node::symtable->symTable.pop_back();
+
   return NULL;
 }
 
@@ -167,6 +191,28 @@ void IfStmt::PrintChildren (int indentLevel) {
 
 llvm::Value *IfStmt::Emit () {
   //TODO Logic for this is intense
+  llvm::Value *cond = this->test->Emit();
+  llvm::LLVMContext *context = irgen->GetContext();
+  llvm::BasicBlock *footBB = llvm::BasicBlock::Create(*context, "footer", irgen->GetFunction());
+  llvm::BasicBlock *elseBB;
+  if (this->elseBody != NULL) {
+    elseBB = llvm::BasicBlock::Create(*context, "elseBB", irgen->GetFunction());
+  }
+  llvm::BasicBlock *thenBB = llvm::BasicBlock::Create(*context, "thenBB", irgen->GetFunction());
+  llvm::BranchInst::Create(thenBB, elseBody ? elseBB : footBB, cond, irgen->GetBasicBlock());
+
+  irgen->SetBasicBlock(thenBB);
+  this->body->Emit();
+  llvm::BranchInst::Create(footBB, irgen->GetBasicBlock());
+
+  if (this->elseBody != NULL) {
+    irgen->SetBasicBlock(elseBB);
+    this->elseBody->Emit();
+    llvm::BranchInst::Create(elseBB, irgen->GetBasicBlock());
+  }
+
+  irgen->SetBasicBlock(footBB);
+
   return NULL;
 }
 
