@@ -11,6 +11,9 @@
 
 SymbolTable *Node::symtable = new SymbolTable();
 IRGenerator *Node::irgen = new IRGenerator();
+vector<llvm::BasicBlock*> *Node::breakStack = new vector<llvm::BasicBlock*>();
+vector<llvm::BasicBlock*> *Node::continueStack = new vector<llvm::BasicBlock*>();
+
 
 Node::Node (yyltype loc) {
   location = new yyltype (loc);

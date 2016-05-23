@@ -62,6 +62,8 @@ class Node {
   Node *parent;
   static IRGenerator *irgen;
   static SymbolTable *symtable;
+  static vector<llvm::BasicBlock*> *breakStack;
+  static vector<llvm::BasicBlock*> *continueStack;
 
 
  public:
