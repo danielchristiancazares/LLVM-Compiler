@@ -20,29 +20,29 @@ class Type;
 
 class IRGenerator {
  public:
-  IRGenerator ();
-  ~IRGenerator ();
+  IRGenerator();
+  ~IRGenerator();
 
-  llvm::Module *GetOrCreateModule (const char *moduleID);
-  llvm::LLVMContext *GetContext () const { return context; }
+  llvm::Module *GetOrCreateModule(const char *moduleID);
+  llvm::LLVMContext *GetContext() const { return context; }
 
   // Add your helper functions here
-  llvm::Function *GetFunction () const;
-  void SetFunction (llvm::Function *func);
-  llvm::Type *Converter(Type*);
+  llvm::Function *GetFunction() const;
+  void SetFunction(llvm::Function *func);
+  llvm::Type *Converter(Type *);
 
-  llvm::BasicBlock *GetBasicBlock () const;
-  void SetBasicBlock (llvm::BasicBlock *bb);
+  llvm::BasicBlock *GetBasicBlock() const;
+  void SetBasicBlock(llvm::BasicBlock *bb);
 
-  llvm::Type *GetIntType () const;
-  llvm::Type *GetBoolType () const;
-  llvm::Type *GetFloatType () const;
-  llvm::Type *GetVec2Type () const;
-  llvm::Type *GetVec3Type () const;
-  llvm::Type *GetVec4Type () const;
-  llvm::Type *GetMat2Type () const;
-  llvm::Type *GetMat3Type () const;
-  llvm::Type *GetMat4Type () const;
+  llvm::Type *GetIntType() const;
+  llvm::Type *GetBoolType() const;
+  llvm::Type *GetFloatType() const;
+  llvm::Type *GetVec2Type() const;
+  llvm::Type *GetVec3Type() const;
+  llvm::Type *GetVec4Type() const;
+  llvm::Type *GetMat2Type() const;
+  llvm::Type *GetMat3Type() const;
+  llvm::Type *GetMat4Type() const;
 
  private:
   llvm::LLVMContext *context;

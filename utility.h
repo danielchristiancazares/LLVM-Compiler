@@ -34,7 +34,7 @@ void Failure(const char *format, ...);
  * will print something similar to the following if ptr is NULL:
  *   *** Failure: Assertion failed: hashtable.cc, line 55:
  *       ptr != NULL
- */ 
+ */
 
 #define Assert(expr)  \
   ((expr) ? (void)0 : Failure("Assertion failed: %s, line %d:\n    %s", __FILE__, __LINE__, #expr))
@@ -82,5 +82,5 @@ bool IsDebugOn(const char *key);
  */
 
 void ParseCommandLine(int argc, char *argv[]);
-     
+
 #endif

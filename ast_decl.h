@@ -18,7 +18,6 @@
 #include "ast_expr.h"
 #include "irgen.h"
 
-
 class Type;
 
 class TypeQualifier;
@@ -31,20 +30,20 @@ class Stmt;
 
 class IRGenerator;
 
-void yyerror (const char *msg);
+void yyerror(const char *msg);
 
 class Decl : public Node {
  protected:
   Identifier *id;
 
  public:
-  Decl () : id (NULL) { }
+  Decl() : id(NULL) { }
 
-  Decl (Identifier *name);
+  Decl(Identifier *name);
 
-  Identifier *GetIdentifier () const { return id; }
+  Identifier *GetIdentifier() const { return id; }
 
-  friend ostream &operator<< (ostream &out, Decl *d) { return out << d->id; }
+  friend ostream &operator<<(ostream &out, Decl *d) { return out << d->id; }
 };
 
 class VarDecl : public Decl {
@@ -54,30 +53,30 @@ class VarDecl : public Decl {
   Expr *assignTo;
 
  public:
-  VarDecl () : type (NULL), typeq (NULL), assignTo (NULL) { }
+  VarDecl() : type(NULL), typeq(NULL), assignTo(NULL) { }
 
-  VarDecl (Identifier *name, Type *type, Expr *assignTo = NULL);
+  VarDecl(Identifier *name, Type *type, Expr *assignTo = NULL);
 
-  VarDecl (Identifier *name, TypeQualifier *typeq, Expr *assignTo = NULL);
+  VarDecl(Identifier *name, TypeQualifier *typeq, Expr *assignTo = NULL);
 
-  VarDecl (Identifier *name, Type *type, TypeQualifier *typeq, Expr *assignTo = NULL);
+  VarDecl(Identifier *name, Type *type, TypeQualifier *typeq, Expr *assignTo = NULL);
 
-  const char *GetPrintNameForNode () { return "VarDecl"; }
+  const char *GetPrintNameForNode() { return "VarDecl"; }
 
-  void PrintChildren (int indentLevel);
+  void PrintChildren(int indentLevel);
 
-  Type *GetType () const { return type; }
+  Type *GetType() const { return type; }
 
-  llvm::Value *Emit ();
+  llvm::Value *Emit();
 };
 
 class VarDeclError : public VarDecl {
  public:
-  VarDeclError () : VarDecl () { yyerror (this->GetPrintNameForNode ()); };
+  VarDeclError() : VarDecl() { yyerror(this->GetPrintNameForNode()); };
 
-  const char *GetPrintNameForNode () { return "VarDeclError"; }
+  const char *GetPrintNameForNode() { return "VarDeclError"; }
 
-  llvm::Value *Emit ();
+  llvm::Value *Emit();
 };
 
 class FnDecl : public Decl {
@@ -88,30 +87,30 @@ class FnDecl : public Decl {
   Stmt *body;
 
  public:
-  FnDecl () : Decl (), formals (NULL), returnType (NULL), returnTypeq (NULL), body (NULL) { }
+  FnDecl() : Decl(), formals(NULL), returnType(NULL), returnTypeq(NULL), body(NULL) { }
 
-  FnDecl (Identifier *name, Type *returnType, List<VarDecl *> *formals);
+  FnDecl(Identifier *name, Type *returnType, List<VarDecl *> *formals);
 
-  FnDecl (Identifier *name, Type *returnType, TypeQualifier *returnTypeq, List<VarDecl *> *formals);
+  FnDecl(Identifier *name, Type *returnType, TypeQualifier *returnTypeq, List<VarDecl *> *formals);
 
-  void SetFunctionBody (Stmt *b);
+  void SetFunctionBody(Stmt *b);
 
-  const char *GetPrintNameForNode () { return "FnDecl"; }
+  const char *GetPrintNameForNode() { return "FnDecl"; }
 
-  void PrintChildren (int indentLevel);
+  void PrintChildren(int indentLevel);
 
-  Type *GetType () const { return returnType; }
+  Type *GetType() const { return returnType; }
 
-  List<VarDecl *> *GetFormals () { return formals; }
+  List<VarDecl *> *GetFormals() { return formals; }
 
   llvm::Value *Emit();
 };
 
 class FormalsError : public FnDecl {
  public:
-  FormalsError () : FnDecl () { yyerror (this->GetPrintNameForNode ()); }
+  FormalsError() : FnDecl() { yyerror(this->GetPrintNameForNode()); }
 
-  const char *GetPrintNameForNode () { return "FormalsError"; }
+  const char *GetPrintNameForNode() { return "FormalsError"; }
 };
 
 #endif

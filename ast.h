@@ -63,45 +63,47 @@ class Node {
   static IRGenerator *irgen;
   static SymbolTable *symtable;
 
-
  public:
-  Node (yyltype loc);
+  Node(yyltype loc);
 
-  Node ();
+  Node();
 
-  virtual ~Node () { }
+  virtual ~Node() { }
 
-  yyltype *GetLocation () { return location; }
+  yyltype *GetLocation() { return location; }
 
-  void SetParent (Node *p) { parent = p; }
+  void SetParent(Node *p) { parent = p; }
 
-  Node *GetParent () { return parent; }
+  Node *GetParent() { return parent; }
 
-  virtual const char *GetPrintNameForNode () = 0;
+  virtual const char *GetPrintNameForNode() = 0;
 
   // Print() is deliberately _not_ virtual
   // subclasses should override PrintChildren() instead
-  void Print (int indentLevel, const char *label = NULL);
+  void Print(int indentLevel, const char *label = NULL);
 
-  virtual void PrintChildren (int indentLevel) { }
-  virtual llvm::Value *Emit() { llvm::Value *ty = NULL; return ty; }
-  
-  };
+  virtual void PrintChildren(int indentLevel) { }
+  virtual llvm::Value *Emit() {
+    llvm::Value *ty = NULL;
+    return ty;
+  }
+
+};
 
 class Identifier : public Node {
  protected:
   char *name;
 
  public:
-  Identifier (yyltype loc, const char *name);
+  Identifier(yyltype loc, const char *name);
 
-  const char *GetPrintNameForNode () { return "Identifier"; }
+  const char *GetPrintNameForNode() { return "Identifier"; }
 
-  char *GetName () const { return name; }
+  char *GetName() const { return name; }
 
-  void PrintChildren (int indentLevel);
+  void PrintChildren(int indentLevel);
 
-  friend ostream &operator<< (ostream &out, Identifier *id) { return out << id->name; }
+  friend ostream &operator<<(ostream &out, Identifier *id) { return out << id->name; }
 };
 
 // This node class is designed to represent a portion of the tree that
@@ -111,9 +113,9 @@ class Identifier : public Node {
 // when your parser can continue after an error.
 class Error : public Node {
  public:
-  Error () : Node () { }
+  Error() : Node() { }
 
-  const char *GetPrintNameForNode () { return "Error"; }
+  const char *GetPrintNameForNode() { return "Error"; }
 };
 
 #endif

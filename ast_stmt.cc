@@ -12,26 +12,26 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/raw_ostream.h"
 
-Program::Program (List<Decl *> *d) {
+Program::Program(List<Decl *> *d) {
   Assert(d != NULL);
-  (decls = d)->SetParentAll (this);
+  (decls = d)->SetParentAll(this);
 }
 
-void Program::PrintChildren (int indentLevel) {
-  decls->PrintAll (indentLevel + 1);
-  printf ("\n");
+void Program::PrintChildren(int indentLevel) {
+  decls->PrintAll(indentLevel + 1);
+  printf("\n");
 }
 
-llvm::Value *Program::Emit () {
-  if(decls->NumElements () <= 0) {
+llvm::Value *Program::Emit() {
+  if(decls->NumElements() <= 0) {
     return NULL;
   }
 
-  irgen->GetOrCreateModule ("irgen.bc");
-  
-  for (int i = 0; i < decls->NumElements (); ++i) {
-    Decl* decl = decls->Nth (i);
-    decl->Emit ();
+  irgen->GetOrCreateModule("irgen.bc");
+
+  for (int i = 0; i < decls->NumElements(); ++i) {
+    Decl *decl = decls->Nth(i);
+    decl->Emit();
   }
 
 
@@ -62,18 +62,18 @@ llvm::Value *Program::Emit () {
   return NULL;
 }
 
-StmtBlock::StmtBlock (List<VarDecl *> *d, List<Stmt *> *s) {
+StmtBlock::StmtBlock(List<VarDecl *> *d, List<Stmt *> *s) {
   Assert(d != NULL && s != NULL);
-  (decls = d)->SetParentAll (this);
-  (stmts = s)->SetParentAll (this);
+  (decls = d)->SetParentAll(this);
+  (stmts = s)->SetParentAll(this);
 }
 
-void StmtBlock::PrintChildren (int indentLevel) {
-  decls->PrintAll (indentLevel + 1);
-  stmts->PrintAll (indentLevel + 1);
+void StmtBlock::PrintChildren(int indentLevel) {
+  decls->PrintAll(indentLevel + 1);
+  stmts->PrintAll(indentLevel + 1);
 }
 
-llvm::Value *StmtBlock::Emit () {
+llvm::Value *StmtBlock::Emit() {
   // TODO Need to figure out the logic for this.
   /*
     Get the current scope
@@ -85,84 +85,84 @@ llvm::Value *StmtBlock::Emit () {
     s->Emit()   
     Delete  scope 
   */
-    // get formals for local variables
-    map<string, SymbolTable::DeclAssoc> tempScope = Node::symtable->symTable.back();
-    map<string, SymbolTable::DeclAssoc> newScope;
+  // get formals for local variables
+  map <string, SymbolTable::DeclAssoc> tempScope = Node::symtable->symTable.back();
+  map <string, SymbolTable::DeclAssoc> newScope;
 
-    FnDecl *f = dynamic_cast<FnDecl*>(tempScope.rbegin()->second.decl);
-    if (f == NULL) {
-      cout << "SHIT IS NULL" << endl;
-    }
-    List<VarDecl*> *formalList = f->GetFormals();
-    string name;
-    SymbolTable::DeclAssoc declassoc;
+  FnDecl *f = dynamic_cast<FnDecl *>(tempScope.rbegin()->second.decl);
+  if(f == NULL) {
+    cout << "SHIT IS NULL" << endl;
+  }
+  List<VarDecl *> *formalList = f->GetFormals();
+  string name;
+  SymbolTable::DeclAssoc declassoc;
 
-    for(int i = 0; i < formalList->NumElements(); i++) {
-      VarDecl *v = formalList->Nth(i);
-      llvm::Type *varType = irgen->Converter(v->GetType());
-      name = v->GetIdentifier()->GetName();
-      llvm::Value *value = new llvm::AllocaInst(varType, name, irgen->GetBasicBlock());
-      declassoc.decl = v;
-      declassoc.value = value;
-      newScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
-    }
+  for (int i = 0; i < formalList->NumElements(); i++) {
+    VarDecl *v = formalList->Nth(i);
+    llvm::Type *varType = irgen->Converter(v->GetType());
+    name = v->GetIdentifier()->GetName();
+    llvm::Value *value = new llvm::AllocaInst(varType, name, irgen->GetBasicBlock());
+    declassoc.decl = v;
+    declassoc.value = value;
+    newScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
+  }
 
-    Node::symtable->symTable.push_back(newScope);
-    for(int i  = 0; i < this->stmts->NumElements(); i++) {
-      Stmt *s = this->stmts->Nth(i);
-      s->Emit();
-    }
+  Node::symtable->symTable.push_back(newScope);
+  for (int i = 0; i < this->stmts->NumElements(); i++) {
+    Stmt *s = this->stmts->Nth(i);
+    s->Emit();
+  }
 
-    Node::symtable->symTable.pop_back();
+  Node::symtable->symTable.pop_back();
 
   return NULL;
 }
 
-DeclStmt::DeclStmt (Decl *d) {
+DeclStmt::DeclStmt(Decl *d) {
   Assert(d != NULL);
-  (decl = d)->SetParent (this);
+  (decl = d)->SetParent(this);
 }
 
-void DeclStmt::PrintChildren (int indentLevel) {
-  decl->Print (indentLevel + 1);
+void DeclStmt::PrintChildren(int indentLevel) {
+  decl->Print(indentLevel + 1);
 }
 
-llvm::Value *DeclStmt::Emit () {
-  decl->Emit ();
+llvm::Value *DeclStmt::Emit() {
+  decl->Emit();
   return NULL;
 }
 
-ConditionalStmt::ConditionalStmt (Expr *t, Stmt *b) {
+ConditionalStmt::ConditionalStmt(Expr *t, Stmt *b) {
   Assert(t != NULL && b != NULL);
-  (test = t)->SetParent (this);
-  (body = b)->SetParent (this);
+  (test = t)->SetParent(this);
+  (body = b)->SetParent(this);
 }
 
-llvm::Value *ConditionalStmt::Emit () {
-  test->Emit ();
-  body->Emit ();
+llvm::Value *ConditionalStmt::Emit() {
+  test->Emit();
+  body->Emit();
   return NULL;
 }
 
-ForStmt::ForStmt (Expr *i, Expr *t, Expr *s, Stmt *b) : LoopStmt (t, b) {
+ForStmt::ForStmt(Expr *i, Expr *t, Expr *s, Stmt *b) : LoopStmt(t, b) {
   Assert(i != NULL && t != NULL && b != NULL);
-  (init = i)->SetParent (this);
+  (init = i)->SetParent(this);
   step = s;
   if(s) {
-    (step = s)->SetParent (this);
+    (step = s)->SetParent(this);
   }
 }
 
-void ForStmt::PrintChildren (int indentLevel) {
-  init->Print (indentLevel + 1, "(init) ");
-  test->Print (indentLevel + 1, "(test) ");
+void ForStmt::PrintChildren(int indentLevel) {
+  init->Print(indentLevel + 1, "(init) ");
+  test->Print(indentLevel + 1, "(test) ");
   if(step) {
-    step->Print (indentLevel + 1, "(step) ");
+    step->Print(indentLevel + 1, "(step) ");
   }
-  body->Print (indentLevel + 1, "(body) ");
+  body->Print(indentLevel + 1, "(body) ");
 }
 
-llvm::Value *ForStmt::Emit () {
+llvm::Value *ForStmt::Emit() {
   //TODO Logic for this is intense
   llvm::LLVMContext *context = irgen->GetContext();
   // creating the basicblocks
@@ -181,7 +181,7 @@ llvm::Value *ForStmt::Emit () {
   // emit test
   llvm::Value *cond = this->test->Emit();
 
-   // irgen headerBB
+  // irgen headerBB
   llvm::BranchInst::Create(bodyBB, footBB, cond, irgen->GetBasicBlock());
 
   // jump to footer
@@ -192,7 +192,7 @@ llvm::Value *ForStmt::Emit () {
   llvm::Value *body = this->body->Emit();
   irgen->SetBasicBlock(bodyBB);
   // check terminator instruction
-  if (bodyBB->getTerminator() == NULL) {
+  if(bodyBB->getTerminator() == NULL) {
     llvm::BranchInst::Create(stepBB, irgen->GetBasicBlock());
   }
 
@@ -202,35 +202,35 @@ llvm::Value *ForStmt::Emit () {
   return NULL;
 }
 
-void WhileStmt::PrintChildren (int indentLevel) {
-  test->Print (indentLevel + 1, "(test) ");
-  body->Print (indentLevel + 1, "(body) ");
+void WhileStmt::PrintChildren(int indentLevel) {
+  test->Print(indentLevel + 1, "(test) ");
+  body->Print(indentLevel + 1, "(body) ");
 }
 
-llvm::Value *WhileStmt::Emit () {
+llvm::Value *WhileStmt::Emit() {
   //TODO Logic for this is intense
   return NULL;
 }
 
-IfStmt::IfStmt (Expr *t, Stmt *tb, Stmt *eb) : ConditionalStmt (t, tb) {
+IfStmt::IfStmt(Expr *t, Stmt *tb, Stmt *eb) : ConditionalStmt(t, tb) {
   Assert(t != NULL && tb != NULL); // else can be NULL
   elseBody = eb;
-  if(elseBody) { elseBody->SetParent (this); }
+  if(elseBody) { elseBody->SetParent(this); }
 }
 
-void IfStmt::PrintChildren (int indentLevel) {
-  if(test) { test->Print (indentLevel + 1, "(test) "); }
-  if(body) { body->Print (indentLevel + 1, "(then) "); }
-  if(elseBody) { elseBody->Print (indentLevel + 1, "(else) "); }
+void IfStmt::PrintChildren(int indentLevel) {
+  if(test) { test->Print(indentLevel + 1, "(test) "); }
+  if(body) { body->Print(indentLevel + 1, "(then) "); }
+  if(elseBody) { elseBody->Print(indentLevel + 1, "(else) "); }
 }
 
-llvm::Value *IfStmt::Emit () {
+llvm::Value *IfStmt::Emit() {
   //TODO Logic for this is intense
   llvm::Value *cond = this->test->Emit();
   llvm::LLVMContext *context = irgen->GetContext();
   llvm::BasicBlock *footBB = llvm::BasicBlock::Create(*context, "footBB", irgen->GetFunction());
   llvm::BasicBlock *elseBB;
-  if (this->elseBody != NULL) {
+  if(this->elseBody != NULL) {
     elseBB = llvm::BasicBlock::Create(*context, "elseBB", irgen->GetFunction());
   }
   llvm::BasicBlock *thenBB = llvm::BasicBlock::Create(*context, "thenBB", irgen->GetFunction());
@@ -240,7 +240,7 @@ llvm::Value *IfStmt::Emit () {
   this->body->Emit();
   llvm::BranchInst::Create(footBB, irgen->GetBasicBlock());
 
-  if (this->elseBody != NULL) {
+  if(this->elseBody != NULL) {
     irgen->SetBasicBlock(elseBB);
     this->elseBody->Emit();
     llvm::BranchInst::Create(footBB, irgen->GetBasicBlock());
@@ -251,71 +251,71 @@ llvm::Value *IfStmt::Emit () {
   return NULL;
 }
 
-ReturnStmt::ReturnStmt (yyltype loc, Expr *e) : Stmt (loc) {
+ReturnStmt::ReturnStmt(yyltype loc, Expr *e) : Stmt(loc) {
   expr = e;
-  if(e != NULL) { expr->SetParent (this); }
+  if(e != NULL) { expr->SetParent(this); }
 }
 
-void ReturnStmt::PrintChildren (int indentLevel) {
+void ReturnStmt::PrintChildren(int indentLevel) {
   if(expr) {
-    expr->Print (indentLevel + 1);
+    expr->Print(indentLevel + 1);
   }
 }
 
-llvm::Value *ReturnStmt::Emit () {
+llvm::Value *ReturnStmt::Emit() {
   // TODO Check the expression and perform something depending on that?
   return NULL;
 }
 
-SwitchLabel::SwitchLabel (Expr *l, Stmt *s) {
+SwitchLabel::SwitchLabel(Expr *l, Stmt *s) {
   Assert(l != NULL && s != NULL);
-  (label = l)->SetParent (this);
-  (stmt = s)->SetParent (this);
+  (label = l)->SetParent(this);
+  (stmt = s)->SetParent(this);
 }
 
-SwitchLabel::SwitchLabel (Stmt *s) {
+SwitchLabel::SwitchLabel(Stmt *s) {
   Assert(s != NULL);
   label = NULL;
-  (stmt = s)->SetParent (this);
+  (stmt = s)->SetParent(this);
 }
 
-void SwitchLabel::PrintChildren (int indentLevel) {
-  if(label) { label->Print (indentLevel + 1); }
-  if(stmt) { stmt->Print (indentLevel + 1); }
+void SwitchLabel::PrintChildren(int indentLevel) {
+  if(label) { label->Print(indentLevel + 1); }
+  if(stmt) { stmt->Print(indentLevel + 1); }
 }
 
-llvm::Value *SwitchLabel::Emit () {
-  stmt->Emit ();
+llvm::Value *SwitchLabel::Emit() {
+  stmt->Emit();
   return NULL;
 }
 
-SwitchStmt::SwitchStmt (Expr *e, List<Stmt *> *c, Default *d) {
-  Assert(e != NULL && c != NULL && c->NumElements () != 0);
-  (expr = e)->SetParent (this);
-  (cases = c)->SetParentAll (this);
+SwitchStmt::SwitchStmt(Expr *e, List<Stmt *> *c, Default *d) {
+  Assert(e != NULL && c != NULL && c->NumElements() != 0);
+  (expr = e)->SetParent(this);
+  (cases = c)->SetParentAll(this);
   def = d;
-  if(def) { def->SetParent (this); }
+  if(def) { def->SetParent(this); }
 }
 
-void SwitchStmt::PrintChildren (int indentLevel) {
-  if(expr) { expr->Print (indentLevel + 1); }
-  if(cases) { cases->PrintAll (indentLevel + 1); }
-  if(def) { def->Print (indentLevel + 1); }
+void SwitchStmt::PrintChildren(int indentLevel) {
+  if(expr) { expr->Print(indentLevel + 1); }
+  if(cases) { cases->PrintAll(indentLevel + 1); }
+  if(def) { def->Print(indentLevel + 1); }
 }
 
-llvm::Value *SwitchStmt::Emit () {
+llvm::Value *SwitchStmt::Emit() {
   //TODO OMG What do here
   return NULL;
 }
 
-llvm::Value *BreakStmt::Emit () {
+llvm::Value *BreakStmt::Emit() {
   //TODO Create a BasicBlock within SwitchStmt to declare whether or not
   //TODO to exit.
 //  llvm::BranchInst::Create (????, irgen->GetBasicBlock ());
   return NULL;
 }
 
-llvm::Value *ContinueStmt::Emit () {
+llvm::Value *ContinueStmt::Emit() {
   //TODO Same as above.
 //  llvm::BranchInst::Create (?????, irgen->GetBasicBlock ());
   return NULL;
