@@ -89,10 +89,8 @@ llvm::Value *StmtBlock::Emit() {
   map <string, SymbolTable::DeclAssoc> tempScope = Node::symtable->symTable.back();
   map <string, SymbolTable::DeclAssoc> newScope;
 
-  FnDecl *f = dynamic_cast<FnDecl *>(tempScope.rbegin()->second.decl);
-  if(f == NULL) {
-    cout << "SHIT IS NULL" << endl;
-  }
+  FnDecl *f = NULL;
+  f = dynamic_cast<FnDecl *>(tempScope.rbegin()->second.decl);
   List<VarDecl *> *formalList = f->GetFormals();
   string name;
   SymbolTable::DeclAssoc declassoc;

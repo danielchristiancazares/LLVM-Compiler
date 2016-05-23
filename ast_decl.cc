@@ -170,34 +170,51 @@ llvm::Value *FnDecl::Emit() {
   llvm::LLVMContext *context = irgen->GetContext();
   llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "entry", f, irgen->GetBasicBlock());
   irgen->SetBasicBlock(bb);
-
-  // inserting the function name to the current scope
-  map <string, SymbolTable::DeclAssoc> currentScope = Node::symtable->symTable.back();
-  Node::symtable->symTable.pop_back();
-  SymbolTable::DeclAssoc declassoc;
-  declassoc.decl = this;
-  declassoc.value = f;
-  currentScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
-  Node::symtable->symTable.push_back(currentScope);
-
-  /*
-  // creating a new scope for the formals
-  map<string, SymbolTable::DeclAssoc> newScope;
-  for(int i = 0; i < this->formals->NumElements(); i++) {
-    VarDecl *v = this->formals->Nth(i);
-    name = v->GetIdentifier()->GetName();
-    tempType = irgen->Converter(v->GetType());
-    declassoc.value = tempType;
-    declassoc.decl = v;
-    declassoc.isGlobal = false;
+  if (Node::symtable->symTable.empty()) {
+    cout << "SYMTABLE IS EMPTY" << endl;
+    map <string, SymbolTable::DeclAssoc> newScope;
+    SymbolTable::DeclAssoc declassoc;
+    declassoc.decl = this;
+    declassoc.value = f;
     newScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
-  }
-  // pushing new scope
-  Node::symtable->symTable.push_back(newScope);
-  */
+    Node::symtable->symTable.push_back(newScope);
 
-  StmtBlock *stmtblock = dynamic_cast<StmtBlock *>(this->body);
-  stmtblock->Emit();
+    StmtBlock *stmtblock = dynamic_cast<StmtBlock *>(this->body);
+    stmtblock->Emit();
+  }
+  else {
+    // inserting the function name to the current scope
+    cout << "SYMTABLE NOT EMPTY" << endl;
+    map <string, SymbolTable::DeclAssoc> currentScope = Node::symtable->symTable.back();
+    Node::symtable->symTable.pop_back();
+    SymbolTable::DeclAssoc declassoc;
+    cout << "this is " << this << " with return type " << this->returnType << endl;
+    declassoc.decl = this;
+    declassoc.value = f;
+    cout << "scope size before " << currentScope.size() << endl;
+    currentScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
+    cout << "scope size after " << currentScope.size() << endl;
+    Node::symtable->symTable.push_back(currentScope);
+
+    /*
+    // creating a new scope for the formals
+    map<string, SymbolTable::DeclAssoc> newScope;
+    for(int i = 0; i < this->formals->NumElements(); i++) {
+      VarDecl *v = this->formals->Nth(i);
+      name = v->GetIdentifier()->GetName();
+      tempType = irgen->Converter(v->GetType());
+      declassoc.value = tempType;
+      declassoc.decl = v;
+      declassoc.isGlobal = false;
+      newScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
+    }
+    // pushing new scope
+    Node::symtable->symTable.push_back(newScope);
+    */
+
+    StmtBlock *stmtblock = dynamic_cast<StmtBlock *>(this->body);
+    stmtblock->Emit();
+  }
 
   return f;
 
