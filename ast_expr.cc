@@ -162,19 +162,19 @@ void Call::PrintChildren(int indentLevel) {
 llvm::Value *EqualityExpr::Emit() {
   llvm::Value* lhs = left->Emit();
   llvm::Value* rhs = right->Emit();
-  llvm::Type* type = l->getType();
+  llvm::Type* type = lhs->getType();
 
   if(type == irgen->GetIntType()) {
     if(this->op->IsOp("==")) {
-      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_EQ, left, right, "", irgen->GetBasicBlock());
+      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_EQ, lhs, rhs, "", irgen->GetBasicBlock());
     } else if(this->op->IsOp("!=")) {
-      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_NEQ, left, right, "", irgen->GetBasicBlock());
+      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_NE, lhs, rhs, "", irgen->GetBasicBlock());
     }
   } else if(type == irgen->GetFloatType()) {
     if(this->op->IsOp("==")) {
-      return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::ICmpInst::FCMP_OEQ, left, right, "", irgen->GetBasicBlock());
+      return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::CmpInst::FCMP_OEQ, lhs, rhs, "", irgen->GetBasicBlock());
     } else if(this->op->IsOp("!=")) {
-      return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::ICmpInst::FCMP_ONE, left, right, "", irgen->GetBasicBlock());
+      return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::CmpInst::FCMP_ONE, lhs, rhs, "", irgen->GetBasicBlock());
     }
   }
   return NULL;
@@ -206,9 +206,35 @@ llvm::Value *LogicalExpr::Emit() {
 }
 
 llvm::Value *AssignExpr::Emit() {
-  // TODO This is the worst.
-  // Check if it's accessing a field or a variable then either swizzle
-  // or perform the assignment which may be =, +=, *=, etc
+  VarExpr* lhsVar = dynamic_cast<VarExpr*>(left);
+  llvm::Value *rhs = right->Emit();
+
+  llvm::Value *lhs = NULL;
+  vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator
+  it = this->symtable->symTable.rbegin();
+  for (; it != this->symtable->symTable.rend() && lhs == NULL; ++it) {
+    lhs = it->at(this->GetIdentifier()->GetName()).value;
+  }
+
+  if(this->op->IsOp("=")) {
+    return new llvm::StoreInst(rhs, lhs, irgen->GetBasicBlock());
+  } else if(this->op->IsOp("*=")) {
+    llvm::Type *type = rhs->getType();
+    llvm::Value *rhsAdd = NULL;
+    if(type == irgen->GetFloatType()) {
+      rhsAdd = llvm::BinaryOperator::CreateFMul(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
+    } else {
+      rhsAdd = llvm::BinaryOperator::CreateMul(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
+  } else if(this->op->IsOp("+=")) {
+    llvm::Type *type = rhs->getType();
+    llvm::Value *rhsAdd = NULL;
+    if(type == irgen->GetFloatType()) {
+      rhsAdd = llvm::BinaryOperator::CreateFAdd(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
+    } else {
+      rhsAdd = llvm::BinaryOperator::CreateAdd(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
+    }
+    return new llvm::StoreInst(rhsAdd, lhs, irgen->GetBasicBlock());
+  }
 }
 
 llvm::Value *PostfixExpr::Emit() {
