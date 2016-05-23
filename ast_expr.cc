@@ -248,7 +248,6 @@ llvm::Value *FieldAccess::Emit() {
 }
 
 llvm::Value *RelationalExpr::Emit() {
-  //TODO REMOVE
   llvm::Value *lhs = left->Emit();
   llvm::Value *rhs = right->Emit();
   llvm::Type *type = lhs->getType();
@@ -266,13 +265,13 @@ llvm::Value *RelationalExpr::Emit() {
 
   } else if(type == irgen->GetFloatType()) {
     if(this->op->IsOp("<")) {
-      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_SLT, lhs, rhs, "", irgen->GetBasicBlock());
+      return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::ICmpInst::FCMP_OLT, lhs, rhs, "", irgen->GetBasicBlock());
     } else if(this->op->IsOp(">")) {
-      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::FCMP_OGT, lhs, rhs, "", irgen->GetBasicBlock());
+      return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::ICmpInst::FCMP_OGT, lhs, rhs, "", irgen->GetBasicBlock());
     } else if(this->op->IsOp("<=")) {
-      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::FCMP_OLE, lhs, rhs, "", irgen->GetBasicBlock());
+      return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::ICmpInst::FCMP_OLE, lhs, rhs, "", irgen->GetBasicBlock());
     } else if(this->op->IsOp(">=")) {
-      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::FCMP_OGE, lhs, rhs, "", irgen->GetBasicBlock());
+      return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::ICmpInst::FCMP_OGE, lhs, rhs, "", irgen->GetBasicBlock());
     }
   }
   return NULL;
