@@ -3,12 +3,13 @@
  * This file defines the main() routine for the program and not much else.
  * You should not need to modify this file.
  */
-
+ 
 #include <string.h>
 #include <stdio.h>
 #include "utility.h"
 #include "errors.h"
 #include "parser.h"
+
 
 /* Function: main()
  * ----------------
@@ -18,11 +19,12 @@
  * InitParser() is used to set up the parser. The call to yyparse() will
  * attempt to parse a complete program from the input. 
  */
-int main (int argc, char *argv[]) {
-  ParseCommandLine (argc, argv);
-  InitScanner ();
-  InitParser ();
-  yyparse ();
-  return (ReportError::NumErrors () == 0 ? 0 : -1);
+int main(int argc, char *argv[])
+{
+    ParseCommandLine(argc, argv);
+    InitScanner();
+    InitParser();
+    yyparse();
+    return (ReportError::NumErrors() == 0? 0 : -1);
 }
 

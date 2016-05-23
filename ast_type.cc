@@ -42,59 +42,71 @@ TypeQualifier *TypeQualifier::outTypeQualifier = new TypeQualifier ("out");
 TypeQualifier *TypeQualifier::constTypeQualifier = new TypeQualifier ("const");
 TypeQualifier *TypeQualifier::uniformTypeQualifier = new TypeQualifier ("uniform");
 
-Type::Type (const char *n) {
+Type::Type (const char *n)
+{
   Assert(n);
   typeName = strdup (n);
 }
 
-void Type::PrintChildren (int indentLevel) {
+void Type::PrintChildren (int indentLevel)
+{
   printf ("%s", typeName);
 }
 
-TypeQualifier::TypeQualifier (const char *n) {
+TypeQualifier::TypeQualifier (const char *n)
+{
   Assert(n);
   typeQualifierName = strdup (n);
 }
 
-void TypeQualifier::PrintChildren (int indentLevel) {
+void TypeQualifier::PrintChildren (int indentLevel)
+{
   printf ("%s", typeQualifierName);
 }
 
-bool Type::IsNumeric () {
+bool Type::IsNumeric ()
+{
   return this->IsEquivalentTo (Type::intType) || this->IsEquivalentTo (Type::floatType);
 }
 
-bool Type::IsVector () {
+bool Type::IsVector ()
+{
   return this->IsEquivalentTo (Type::vec2Type) ||
-      this->IsEquivalentTo (Type::vec3Type) ||
-      this->IsEquivalentTo (Type::vec4Type);
+         this->IsEquivalentTo (Type::vec3Type) ||
+         this->IsEquivalentTo (Type::vec4Type);
 }
 
-bool Type::IsMatrix () {
+bool Type::IsMatrix ()
+{
   return this->IsEquivalentTo (Type::mat2Type) ||
-      this->IsEquivalentTo (Type::mat3Type) ||
-      this->IsEquivalentTo (Type::mat4Type);
+         this->IsEquivalentTo (Type::mat3Type) ||
+         this->IsEquivalentTo (Type::mat4Type);
 }
 
-bool Type::IsError () {
+bool Type::IsError ()
+{
   return this->IsEquivalentTo (Type::errorType);
 }
 
-NamedType::NamedType (Identifier *i) : Type (*i->GetLocation ()) {
+NamedType::NamedType (Identifier *i) : Type (*i->GetLocation ())
+{
   Assert(i != NULL);
   (id = i)->SetParent (this);
 }
 
-void NamedType::PrintChildren (int indentLevel) {
+void NamedType::PrintChildren (int indentLevel)
+{
   id->Print (indentLevel + 1);
 }
 
-ArrayType::ArrayType (yyltype loc, Type *et, int ec) : Type (loc) {
+ArrayType::ArrayType (yyltype loc, Type *et, int ec) : Type (loc)
+{
   Assert(et != NULL);
   (elemType = et)->SetParent (this);
   elemCount = ec;
 }
-void ArrayType::PrintChildren (int indentLevel) {
+void ArrayType::PrintChildren (int indentLevel)
+{
   elemType->Print (indentLevel + 1);
 }
 

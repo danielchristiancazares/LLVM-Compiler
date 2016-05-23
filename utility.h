@@ -21,7 +21,7 @@
  * Failure accepts printf-style arguments in the message to be printed.
  */
 
-void Failure (const char *format, ...);
+void Failure(const char *format, ...);
 
 /**
  * Macro: Assert()
@@ -34,7 +34,7 @@ void Failure (const char *format, ...);
  * will print something similar to the following if ptr is NULL:
  *   *** Failure: Assertion failed: hashtable.cc, line 55:
  *       ptr != NULL
- */
+ */ 
 
 #define Assert(expr)  \
   ((expr) ? (void)0 : Failure("Assertion failed: %s, line %d:\n    %s", __FILE__, __LINE__, #expr))
@@ -50,7 +50,7 @@ void Failure (const char *format, ...);
  * the command line to turn on debug flags. 
  */
 
-void PrintDebug (const char *key, const char *format, ...);
+void PrintDebug(const char *key, const char *format, ...);
 
 /**
  * Function: SetDebugForKey()
@@ -61,7 +61,7 @@ void PrintDebug (const char *key, const char *format, ...);
  * be called from the provided main for flags passed with -d.
  */
 
-void SetDebugForKey (const char *key, bool val);
+void SetDebugForKey(const char *key, bool val);
 
 /**
  * Function: IsDebugOn()
@@ -71,7 +71,7 @@ void SetDebugForKey (const char *key, bool val);
  * for debug printing.
  */
 
-bool IsDebugOn (const char *key);
+bool IsDebugOn(const char *key);
 
 /**
  * Function: ParseCommandLine
@@ -81,6 +81,6 @@ bool IsDebugOn (const char *key);
  * as being flags to turn on.
  */
 
-void ParseCommandLine (int argc, char *argv[]);
-
+void ParseCommandLine(int argc, char *argv[]);
+     
 #endif

@@ -27,10 +27,10 @@ llvm::Value *Program::Emit () {
     return NULL;
   }
 
-  llvm::Module *mod = irgen->GetOrCreateModule ("irgen.bc");
-
+  irgen->GetOrCreateModule ("irgen.bc");
+  
   for (int i = 0; i < decls->NumElements (); ++i) {
-    Decl *decl = decls->Nth (i);
+    Decl* decl = decls->Nth (i);
     decl->Emit ();
   }
 
@@ -85,13 +85,9 @@ llvm::Value *StmtBlock::Emit () {
     s->Emit()   
     Delete  scope 
   */
-<<<<<<< HEAD
     // get formals for local variables
     map<string, SymbolTable::DeclAssoc> tempScope = Node::symtable->symTable.back();
     map<string, SymbolTable::DeclAssoc> newScope;
-=======
-  map <string, SymbolTable::DeclAssoc> newScope;
->>>>>>> df915d86a66396f7587e1a61c4b2277606185e14
 
     FnDecl *f = dynamic_cast<FnDecl*>(tempScope.rbegin()->second.decl);
     if (f == NULL) {
@@ -119,10 +115,6 @@ llvm::Value *StmtBlock::Emit () {
 
     Node::symtable->symTable.pop_back();
 
-<<<<<<< HEAD
-=======
-llvm::Value *StmtBlock::EmitFromFunc () {
->>>>>>> df915d86a66396f7587e1a61c4b2277606185e14
   return NULL;
 }
 
@@ -172,6 +164,41 @@ void ForStmt::PrintChildren (int indentLevel) {
 
 llvm::Value *ForStmt::Emit () {
   //TODO Logic for this is intense
+  llvm::LLVMContext *context = irgen->GetContext();
+  // creating the basicblocks
+  llvm::BasicBlock *footBB = llvm::BasicBlock::Create(*context, "footBB", irgen->GetFunction());
+  llvm::BasicBlock *stepBB = llvm::BasicBlock::Create(*context, "stepBB", irgen->GetFunction());
+  llvm::BasicBlock *bodyBB = llvm::BasicBlock::Create(*context, "bodyBB", irgen->GetFunction());
+  llvm::BasicBlock *headerBB = llvm::BasicBlock::Create(*context, "headerBB", irgen->GetFunction());
+
+  // emit init
+  llvm::Value *initialization = this->init->Emit();
+
+  // create branch to terminate current BB and start loop header
+  llvm::BranchInst::Create(headerBB, irgen->GetBasicBlock());
+  irgen->SetBasicBlock(headerBB);
+
+  // emit test
+  llvm::Value *cond = this->test->Emit();
+
+   // irgen headerBB
+  llvm::BranchInst::Create(bodyBB, footBB, cond, irgen->GetBasicBlock());
+
+  // jump to footer
+  llvm::BranchInst::Create(footBB, irgen->GetBasicBlock());
+  irgen->SetBasicBlock(footBB);
+
+  // emit body
+  llvm::Value *body = this->body->Emit();
+  irgen->SetBasicBlock(bodyBB);
+  // check terminator instruction
+  if (bodyBB->getTerminator() == NULL) {
+    llvm::BranchInst::Create(stepBB, irgen->GetBasicBlock());
+  }
+
+  llvm::Value *step = this->step->Emit();
+  llvm::BranchInst::Create(headerBB, irgen->GetBasicBlock());
+
   return NULL;
 }
 
@@ -201,7 +228,7 @@ llvm::Value *IfStmt::Emit () {
   //TODO Logic for this is intense
   llvm::Value *cond = this->test->Emit();
   llvm::LLVMContext *context = irgen->GetContext();
-  llvm::BasicBlock *footBB = llvm::BasicBlock::Create(*context, "footer", irgen->GetFunction());
+  llvm::BasicBlock *footBB = llvm::BasicBlock::Create(*context, "footBB", irgen->GetFunction());
   llvm::BasicBlock *elseBB;
   if (this->elseBody != NULL) {
     elseBB = llvm::BasicBlock::Create(*context, "elseBB", irgen->GetFunction());
@@ -216,7 +243,7 @@ llvm::Value *IfStmt::Emit () {
   if (this->elseBody != NULL) {
     irgen->SetBasicBlock(elseBB);
     this->elseBody->Emit();
-    llvm::BranchInst::Create(elseBB, irgen->GetBasicBlock());
+    llvm::BranchInst::Create(footBB, irgen->GetBasicBlock());
   }
 
   irgen->SetBasicBlock(footBB);
