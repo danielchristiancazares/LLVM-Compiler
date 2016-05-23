@@ -171,7 +171,6 @@ llvm::Value *FnDecl::Emit() {
   llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "entry", f, irgen->GetBasicBlock());
   irgen->SetBasicBlock(bb);
   if (Node::symtable->symTable.empty()) {
-    cout << "SYMTABLE IS EMPTY" << endl;
     map <string, SymbolTable::DeclAssoc> newScope;
     SymbolTable::DeclAssoc declassoc;
     declassoc.decl = this;
@@ -184,16 +183,12 @@ llvm::Value *FnDecl::Emit() {
   }
   else {
     // inserting the function name to the current scope
-    cout << "SYMTABLE NOT EMPTY" << endl;
     map <string, SymbolTable::DeclAssoc> currentScope = Node::symtable->symTable.back();
     Node::symtable->symTable.pop_back();
     SymbolTable::DeclAssoc declassoc;
-    cout << "this is " << this << " with return type " << this->returnType << endl;
     declassoc.decl = this;
     declassoc.value = f;
-    cout << "scope size before " << currentScope.size() << endl;
     currentScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
-    cout << "scope size after " << currentScope.size() << endl;
     Node::symtable->symTable.push_back(currentScope);
 
     /*
