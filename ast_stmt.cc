@@ -77,13 +77,13 @@ llvm::Value *StmtBlock::Emit() {
   // TODO Need to figure out the logic for this.
   /*
     Get the current scope
-    For each  element in scope 
+    For each  element in scope
     Create  local variable  (as in  VarDecl::Emit)
     Pop the current scope
-    Create  new scope  
-    For each  statement 's' in  body  of  funcCon:    
-    s->Emit()   
-    Delete  scope 
+    Create  new scope
+    For each  statement 's' in  body  of  funcCon:
+    s->Emit()
+    Delete  scope
   */
   // get formals for local variables
   map <string, SymbolTable::DeclAssoc> newScope;
@@ -110,37 +110,33 @@ llvm::Value *StmtBlock::EmitFromFunc() {
     Delete  scope
   */
   // get formals for local variables
+  map <string, SymbolTable::DeclAssoc> tempScope = Node::symtable->symTable.back();
+  map <string, SymbolTable::DeclAssoc> newScope;
 
-//   = symtable->symTable.front();
-//  map <string, SymbolTable::DeclAssoc> newScope;
-//
-//  map<string, SymbolTable::DeclAssoc>::iterator it = tempScope.begin();
-//  SymbolTable::DeclAssoc declAssoc = it->second;
-//  Decl* fnDecl = declAssoc.decl;
-//  FnDecl *f = dynamic_cast<FnDecl *>(fnDecl);
-//
-//  List<VarDecl *> *formalList = f->GetFormals();
-//  string name;
-//  SymbolTable::DeclAssoc declassoc;
-//
-//  for (int i = 0; i < formalList->NumElements(); i++) {
-//    VarDecl *v = formalList->Nth(i);
-//    llvm::Type *varType = irgen->Converter(v->GetType());
-//    name = v->GetIdentifier()->GetName();
-//    llvm::Value *value = new llvm::AllocaInst(varType, name, irgen->GetBasicBlock());
-//    declassoc.decl = v;
-//    declassoc.value = value;
-//    newScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
-//  }
-//
-//  Node::symtable->symTable.push_back(newScope);
-//  for (int i = 0; i < this->stmts->NumElements(); i++) {
-//    Stmt *s = this->stmts->Nth(i);
-//    s->Emit();
-//  }
-//
-//  symtable->symTable.pop_back();
-//
+  FnDecl *f = dynamic_cast<FnDecl *>(tempScope.begin()->second.decl);
+
+  List<VarDecl *> *formalList = f->GetFormals();
+  string name;
+  SymbolTable::DeclAssoc declassoc;
+
+  for (int i = 0; i < formalList->NumElements(); i++) {
+    VarDecl *v = formalList->Nth(i);
+    llvm::Type *varType = irgen->Converter(v->GetType());
+    name = v->GetIdentifier()->GetName();
+    llvm::Value *value = new llvm::AllocaInst(varType, name, irgen->GetBasicBlock());
+    declassoc.decl = v;
+    declassoc.value = value;
+    newScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
+  }
+
+  Node::symtable->symTable.push_back(newScope);
+  for (int i = 0; i < this->stmts->NumElements(); i++) {
+    Stmt *s = this->stmts->Nth(i);
+    s->Emit();
+  }
+
+  Node::symtable->symTable.pop_back();
+
   return NULL;
 }
 
@@ -337,6 +333,7 @@ void ReturnStmt::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *ReturnStmt::Emit() {
+  // TODO Check the expression and perform something depending on that?
   llvm::LLVMContext *context = irgen->GetContext();
   if (this->expr != NULL) {
     llvm::Value *val = this->expr->Emit();
@@ -385,25 +382,32 @@ void SwitchStmt::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *SwitchStmt::Emit() {
+  //TODO OMG What do here
   /*
-    Find  all the cases /default  case  and create  BB  for each  of  them  
-    Emit  of  Expression  
-    Create  Switch  instrucCon  
-    For each  case  
+    Find  all the cases /default  case  and create  BB  for each  of  them
+    Emit  of  Expression
+    Create  Switch  instrucCon
+    For each  case
     ‘addCase’ to  Switch  instrucCon
-    Emit  for statement in  case  statement 
-    Create  terminator  instrucCon  
+    Emit  for statement in  case  statement
+    Create  terminator  instrucCon
   */
+  for(int i = 0; i < this->cases->NumElements(); i++) {
+
+  }
 
   return NULL;
 }
 
 llvm::Value *BreakStmt::Emit() {
+  //TODO Create a BasicBlock within SwitchStmt to declare whether or not
+  //TODO to exit.
   llvm::BranchInst::Create (Node::breakStack->back(), irgen->GetBasicBlock ());
   return NULL;
 }
 
 llvm::Value *ContinueStmt::Emit() {
+  //TODO Same as above.
   llvm::BranchInst::Create (Node::continueStack->back(), irgen->GetBasicBlock ());
   return NULL;
 }

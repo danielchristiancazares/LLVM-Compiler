@@ -70,7 +70,7 @@ llvm::Value *VarDecl::Emit() {
 
   llvm::Module *mod = irgen->GetOrCreateModule("irgen.bc");
 
-  if(symtable->scopes.empty()) {
+  if(Node::symtable->symTable.empty()) {
     map <string, SymbolTable::DeclAssoc> newMap;
     value = new llvm::GlobalVariable(*mod, type, isConstant, llvm::GlobalValue::ExternalLinkage, constant, name);
     declassoc.value = value;
@@ -80,12 +80,12 @@ llvm::Value *VarDecl::Emit() {
     Node::symtable->symTable.push_back(newMap);
   }
   else {
-    map <string, Scope> currentScope = Node::symtable->symTable.back();
+    map <string, SymbolTable::DeclAssoc> currentScope = Node::symtable->symTable.back();
     Node::symtable->symTable.pop_back();
     string currentVar = this->GetIdentifier()->GetName();
 
     // checks if this is a global scope
-    Scope currDeclAssoc = currentScope.rbegin()->second;
+    SymbolTable::DeclAssoc currDeclAssoc = currentScope.rbegin()->second;
     if(currDeclAssoc.isGlobal == true) {
       value = new llvm::GlobalVariable(*mod, type, isConstant, llvm::GlobalValue::ExternalLinkage, constant, name);
       declassoc.isGlobal = true;
@@ -130,11 +130,12 @@ void FnDecl::PrintChildren(int indentLevel) {
   if(body) { body->Print(indentLevel + 1, "(body) "); }
 }
 llvm::Value *FnDecl::Emit() {
+  // TODO
   // storing the return type
   llvm::Type *returnType = irgen->Converter(this->returnType);
 
   // argtypes
-  List<llvm::Type*> argTypes;
+  vector < llvm::Type * > argTypes;
   llvm::Type *tempType;
 
   //go through the formals

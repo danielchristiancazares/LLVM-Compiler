@@ -13,14 +13,15 @@
 
 using namespace std;
 
-class Scope {
- protected:
-  bool isGlobal;
-  map<string, llvm::Value*> table;
-};
-
 class SymbolTable {
-  List<Scope*> scopes;
+ public:
+  struct DeclAssoc {
+      bool isGlobal;
+      Decl *decl = NULL;
+      llvm::Value *value = NULL;
+  };
+
+  vector< map<string, DeclAssoc> > symTable;
   int loopCounter;
   bool insideSwitch;
   bool returnIsSeen;
