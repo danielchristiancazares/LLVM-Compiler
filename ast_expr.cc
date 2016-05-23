@@ -160,9 +160,9 @@ void Call::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *EqualityExpr::Emit() {
-  llvm::Value* lhs = left->Emit();
-  llvm::Value* rhs = right->Emit();
-  llvm::Type* type = lhs->getType();
+  llvm::Value *lhs = left->Emit();
+  llvm::Value *rhs = right->Emit();
+  llvm::Type *type = lhs->getType();
 
   if(type == irgen->GetIntType()) {
     if(this->op->IsOp("==")) {
@@ -181,11 +181,11 @@ llvm::Value *EqualityExpr::Emit() {
 }
 
 llvm::Value *LogicalExpr::Emit() {
-  llvm::Value* lhs = left->Emit();
-  llvm::Value* rhs = right->Emit();
+  llvm::Value *lhs = left->Emit();
+  llvm::Value *rhs = right->Emit();
 
-  llvm::ConstantInt* lhsBool = (llvm::ConstantInt*)lhs;
-  llvm::ConstantInt* rhsBool = (llvm::ConstantInt*)rhs;
+  llvm::ConstantInt *lhsBool = (llvm::ConstantInt *) lhs;
+  llvm::ConstantInt *rhsBool = (llvm::ConstantInt *) rhs;
 
   if(this->op->IsOp("&&")) {
     if(lhsBool->isOne() && rhsBool->isOne()) {
@@ -206,25 +206,27 @@ llvm::Value *LogicalExpr::Emit() {
 }
 
 llvm::Value *AssignExpr::Emit() {
-  VarExpr* lhsVar = dynamic_cast<VarExpr*>(left);
+  VarExpr *lhsVar = dynamic_cast<VarExpr *>(left);
   llvm::Value *rhs = right->Emit();
 
   llvm::Value *lhs = NULL;
   vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator
   it = this->symtable->symTable.rbegin();
   for (; it != this->symtable->symTable.rend() && lhs == NULL; ++it) {
-    lhs = it->at(this->GetIdentifier()->GetName()).value;
+    lhs = it->at(lhsVar->GetIdentifier()->GetName()).value;
   }
 
   if(this->op->IsOp("=")) {
     return new llvm::StoreInst(rhs, lhs, irgen->GetBasicBlock());
   } else if(this->op->IsOp("*=")) {
     llvm::Type *type = rhs->getType();
-    llvm::Value *rhsAdd = NULL;
+    llvm::Value *rhsMult = NULL;
     if(type == irgen->GetFloatType()) {
-      rhsAdd = llvm::BinaryOperator::CreateFMul(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
+      rhsMult = llvm::BinaryOperator::CreateFMul(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
     } else {
-      rhsAdd = llvm::BinaryOperator::CreateMul(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
+      rhsMult = llvm::BinaryOperator::CreateMul(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
+    }
+    return new llvm::StoreInst(rhsMult, lhs, irgen->GetBasicBlock());
   } else if(this->op->IsOp("+=")) {
     llvm::Type *type = rhs->getType();
     llvm::Value *rhsAdd = NULL;
@@ -246,5 +248,32 @@ llvm::Value *FieldAccess::Emit() {
 }
 
 llvm::Value *RelationalExpr::Emit() {
+  //TODO REMOVE
+  llvm::Value *lhs = left->Emit();
+  llvm::Value *rhs = right->Emit();
+  llvm::Type *type = lhs->getType();
 
+  if(type == irgen->GetIntType()) {
+    if(this->op->IsOp("<")) {
+      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_SLT, lhs, rhs, "", irgen->GetBasicBlock());
+    } else if(this->op->IsOp(">")) {
+      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_SGT, lhs, rhs, "", irgen->GetBasicBlock());
+    } else if(this->op->IsOp("<=")) {
+      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_SLE, lhs, rhs, "", irgen->GetBasicBlock());
+    } else if(this->op->IsOp(">=")) {
+      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_SGE, lhs, rhs, "", irgen->GetBasicBlock());
+    }
+
+  } else if(type == irgen->GetFloatType()) {
+    if(this->op->IsOp("<")) {
+      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_SLT, lhs, rhs, "", irgen->GetBasicBlock());
+    } else if(this->op->IsOp(">")) {
+      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::FCMP_OGT, lhs, rhs, "", irgen->GetBasicBlock());
+    } else if(this->op->IsOp("<=")) {
+      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::FCMP_OLE, lhs, rhs, "", irgen->GetBasicBlock());
+    } else if(this->op->IsOp(">=")) {
+      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::FCMP_OGE, lhs, rhs, "", irgen->GetBasicBlock());
+    }
+  }
+  return NULL;
 }

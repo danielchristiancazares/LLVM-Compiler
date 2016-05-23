@@ -166,7 +166,7 @@ llvm::Value *ForStmt::Emit() {
   //TODO Logic for this is intense
   llvm::LLVMContext *context = irgen->GetContext();
   // creating the basicblocks
-  llvm::BasicBlock *footBB = llvm::BasicBlock::Create(*context, "footBB", irgen->GetFunction());
+  llvm::BasicBlock *footerBB = llvm::BasicBlock::Create(*context, "footerBB", irgen->GetFunction());
   llvm::BasicBlock *stepBB = llvm::BasicBlock::Create(*context, "stepBB", irgen->GetFunction());
   llvm::BasicBlock *bodyBB = llvm::BasicBlock::Create(*context, "bodyBB", irgen->GetFunction());
   llvm::BasicBlock *headerBB = llvm::BasicBlock::Create(*context, "headerBB", irgen->GetFunction());
@@ -182,11 +182,17 @@ llvm::Value *ForStmt::Emit() {
   llvm::Value *cond = this->test->Emit();
 
   // irgen headerBB
-  llvm::BranchInst::Create(bodyBB, footBB, cond, irgen->GetBasicBlock());
+  llvm::BranchInst::Create(bodyBB, footerBB, cond, irgen->GetBasicBlock());
 
   // jump to footer
-  llvm::BranchInst::Create(footBB, irgen->GetBasicBlock());
-  irgen->SetBasicBlock(footBB);
+  llvm::BranchInst::Create(footerBB, irgen->GetBasicBlock());
+  irgen->SetBasicBlock(footerBB);
+
+  // saving footerBB for break statement
+  Node::breakStack->push_back(footerBB);
+
+  // saving headerBB for continue statement
+  Node::continueStack->push_back(headerBB);
 
   // emit body
   llvm::Value *body = this->body->Emit();
@@ -199,6 +205,12 @@ llvm::Value *ForStmt::Emit() {
   llvm::Value *step = this->step->Emit();
   llvm::BranchInst::Create(headerBB, irgen->GetBasicBlock());
 
+  // pop break stack
+  Node::breakStack->pop_back();
+
+  // pop continue stack
+  Node::continueStack->pop_back();
+
   return NULL;
 }
 
@@ -209,6 +221,43 @@ void WhileStmt::PrintChildren(int indentLevel) {
 
 llvm::Value *WhileStmt::Emit() {
   //TODO Logic for this is intense
+  // making the basic blocks
+  llvm::LLVMContext *context = irgen->GetContext();
+  llvm::BasicBlock *headerBB = llvm::BasicBlock::Create(*context, "headerBB", irgen->GetFunction());
+  llvm::BasicBlock *bodyBB = llvm::BasicBlock::Create(*context, "bodyBB", irgen->GetFunction());
+  llvm::BasicBlock *footerBB = llvm::BasicBlock::Create(*context, "footerBB", irgen->GetFunction());
+
+  // create branch to terminate current BB and start loop header
+  llvm::BranchInst::Create(headerBB, irgen->GetBasicBlock());
+  irgen->SetBasicBlock(headerBB);
+
+  // branch according to test condition
+  llvm::Value *cond = this->test->Emit();
+  llvm::BranchInst::Create(bodyBB, footerBB, cond, irgen->GetBasicBlock());
+
+  // saving footerBB for break statement
+  Node::breakStack->push_back(footerBB);
+
+  // saving headerBB for continue statement
+  Node::continueStack->push_back(headerBB);
+
+  // emit body
+  irgen->SetBasicBlock(bodyBB);
+  llvm::Value *body = this->body->Emit();
+
+  // check terminator instruction
+  if (bodyBB->getTerminator() == NULL) {
+    llvm::BranchInst::Create(headerBB, irgen->GetBasicBlock());
+  }
+
+  irgen->SetBasicBlock(footerBB);
+
+  // pop break stack
+  Node::breakStack->pop_back();
+
+  // pop the continue stack
+  Node::continueStack->pop_back();
+
   return NULL;
 }
 
@@ -228,25 +277,25 @@ llvm::Value *IfStmt::Emit() {
   //TODO Logic for this is intense
   llvm::Value *cond = this->test->Emit();
   llvm::LLVMContext *context = irgen->GetContext();
-  llvm::BasicBlock *footBB = llvm::BasicBlock::Create(*context, "footBB", irgen->GetFunction());
-  llvm::BasicBlock *elseBB;
+  llvm::BasicBlock *footerBB = llvm::BasicBlock::Create(*context, "footerBB", irgen->GetFunction());
+  llvm::BasicBlock *elseBB = NULL;
   if(this->elseBody != NULL) {
     elseBB = llvm::BasicBlock::Create(*context, "elseBB", irgen->GetFunction());
   }
   llvm::BasicBlock *thenBB = llvm::BasicBlock::Create(*context, "thenBB", irgen->GetFunction());
-  llvm::BranchInst::Create(thenBB, elseBody ? elseBB : footBB, cond, irgen->GetBasicBlock());
+  llvm::BranchInst::Create(thenBB, elseBody ? elseBB : footerBB, cond, irgen->GetBasicBlock());
 
   irgen->SetBasicBlock(thenBB);
   this->body->Emit();
-  llvm::BranchInst::Create(footBB, irgen->GetBasicBlock());
+  llvm::BranchInst::Create(footerBB, irgen->GetBasicBlock());
 
   if(this->elseBody != NULL) {
     irgen->SetBasicBlock(elseBB);
     this->elseBody->Emit();
-    llvm::BranchInst::Create(footBB, irgen->GetBasicBlock());
+    llvm::BranchInst::Create(footerBB, irgen->GetBasicBlock());
   }
 
-  irgen->SetBasicBlock(footBB);
+  irgen->SetBasicBlock(footerBB);
 
   return NULL;
 }
@@ -264,6 +313,14 @@ void ReturnStmt::PrintChildren(int indentLevel) {
 
 llvm::Value *ReturnStmt::Emit() {
   // TODO Check the expression and perform something depending on that?
+  llvm::LLVMContext *context = irgen->GetContext();
+  if (this->expr != NULL) {
+    llvm::Value *val = this->expr->Emit();
+    llvm::ReturnInst::Create(*context, val, irgen->GetBasicBlock());
+  }
+  else {
+    llvm::ReturnInst::Create(*context, irgen->GetBasicBlock());
+  }
   return NULL;
 }
 
@@ -305,19 +362,32 @@ void SwitchStmt::PrintChildren(int indentLevel) {
 
 llvm::Value *SwitchStmt::Emit() {
   //TODO OMG What do here
+  /*
+    Find  all the cases /default  case  and create  BB  for each  of  them  
+    Emit  of  Expression  
+    Create  Switch  instrucCon  
+    For each  case  
+    ‘addCase’ to  Switch  instrucCon
+    Emit  for statement in  case  statement 
+    Create  terminator  instrucCon  
+  */
+  for(int i = 0; i < this->cases->NumElements(); i++) {
+    
+  }
+
   return NULL;
 }
 
 llvm::Value *BreakStmt::Emit() {
   //TODO Create a BasicBlock within SwitchStmt to declare whether or not
   //TODO to exit.
-//  llvm::BranchInst::Create (????, irgen->GetBasicBlock ());
+  llvm::BranchInst::Create (Node::breakStack->back(), irgen->GetBasicBlock ());
   return NULL;
 }
 
 llvm::Value *ContinueStmt::Emit() {
   //TODO Same as above.
-//  llvm::BranchInst::Create (?????, irgen->GetBasicBlock ());
+  llvm::BranchInst::Create (Node::continueStack->back(), irgen->GetBasicBlock ());
   return NULL;
 }
 
