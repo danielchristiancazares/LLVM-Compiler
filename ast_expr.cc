@@ -160,9 +160,9 @@ void Call::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *EqualityExpr::Emit() {
-  llvm::Value *left = left->Emit();
-  llvm::Value *right = right->Emit();
-  llvm::Type *type = l->getType();
+  llvm::Value* lhs = left->Emit();
+  llvm::Value* rhs = right->Emit();
+  llvm::Type* type = l->getType();
 
   if(type == irgen->GetIntType()) {
     if(this->op->IsOp("==")) {
@@ -181,13 +181,28 @@ llvm::Value *EqualityExpr::Emit() {
 }
 
 llvm::Value *LogicalExpr::Emit() {
-  llvm::Value *l = left->Emit();
-  llvm::Value *r = right->Emit();
-  llvm::Value *retVal = NULL;
+  llvm::Value* lhs = left->Emit();
+  llvm::Value* rhs = right->Emit();
 
-  // TODO Some sort of comparison depending on whether it's AND or OR
+  llvm::ConstantInt* lhsBool = (llvm::ConstantInt*)lhs;
+  llvm::ConstantInt* rhsBool = (llvm::ConstantInt*)rhs;
 
-  return retVal;
+  if(this->op->IsOp("&&")) {
+    if(lhsBool->isOne() && rhsBool->isOne()) {
+      return lhs;
+    } else if(rhsBool->isZero()) {
+      return rhs;
+    } else {
+      return lhs;
+    }
+  } else if(this->op->IsOp("||")) {
+    if(lhsBool->isOne()) {
+      return lhs;
+    } else {
+      return rhs;
+    }
+  }
+  return NULL;
 }
 
 llvm::Value *AssignExpr::Emit() {
