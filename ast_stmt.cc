@@ -27,7 +27,7 @@ llvm::Value *Program::Emit() {
     return NULL;
   }
 
-  irgen->GetOrCreateModule("irgen.bc");
+  llvm::Module *mod = irgen->GetOrCreateModule("irgen.bc");
 
   for (int i = 0; i < decls->NumElements(); ++i) {
     Decl *decl = decls->Nth(i);
@@ -58,7 +58,7 @@ llvm::Value *Program::Emit() {
 //    llvm::ReturnInst::Create(*context, sum, bb);
 
 // write the BC into standard output
-//    llvm::WriteBitcodeToFile(mod, llvm::outs());
+  llvm::WriteBitcodeToFile(mod, llvm::outs());
   return NULL;
 }
 
@@ -86,25 +86,7 @@ llvm::Value *StmtBlock::Emit() {
     Delete  scope 
   */
   // get formals for local variables
-  map <string, SymbolTable::DeclAssoc> tempScope = Node::symtable->symTable.back();
   map <string, SymbolTable::DeclAssoc> newScope;
-
-  FnDecl *f = NULL;
-  f = dynamic_cast<FnDecl *>(tempScope.rbegin()->second.decl);
-  List<VarDecl *> *formalList = f->GetFormals();
-  string name;
-  SymbolTable::DeclAssoc declassoc;
-
-  for (int i = 0; i < formalList->NumElements(); i++) {
-    VarDecl *v = formalList->Nth(i);
-    llvm::Type *varType = irgen->Converter(v->GetType());
-    name = v->GetIdentifier()->GetName();
-    llvm::Value *value = new llvm::AllocaInst(varType, name, irgen->GetBasicBlock());
-    declassoc.decl = v;
-    declassoc.value = value;
-    newScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
-  }
-
   Node::symtable->symTable.push_back(newScope);
   for (int i = 0; i < this->stmts->NumElements(); i++) {
     Stmt *s = this->stmts->Nth(i);
@@ -113,6 +95,63 @@ llvm::Value *StmtBlock::Emit() {
 
   Node::symtable->symTable.pop_back();
 
+  return NULL;
+}
+
+llvm::Value *StmtBlock::EmitFromFunc() {
+  /*
+    Get the current scope
+    For each  element in scope
+    Create  local variable  (as in  VarDecl::Emit)
+    Pop the current scope
+    Create  new scope
+    For each  statement 's' in  body  of  funcCon:
+    s->Emit()
+    Delete  scope
+  */
+  // get formals for local variables
+  std::cerr << "Size of symbol table: " << this->stmts->NumElements() << endl;
+
+  for(int i = 0; i < this->stmts->NumElements(); ++i) {
+    if(strcmp(stmts->Nth(i)->GetPrintNameForNode(),"StmtBlock")) {
+      stmts->Nth(i)->Emit();
+    } else {
+      symtable->symTable.push_back(new map <string, SymbolTable::DeclAssoc>());
+      stmts->Nth(i)->Emit();
+      symtable->symTable.pop_back();
+    }
+  }
+
+//   = symtable->symTable.front();
+//  map <string, SymbolTable::DeclAssoc> newScope;
+//
+//  map<string, SymbolTable::DeclAssoc>::iterator it = tempScope.begin();
+//  SymbolTable::DeclAssoc declAssoc = it->second;
+//  Decl* fnDecl = declAssoc.decl;
+//  FnDecl *f = dynamic_cast<FnDecl *>(fnDecl);
+//
+//  List<VarDecl *> *formalList = f->GetFormals();
+//  string name;
+//  SymbolTable::DeclAssoc declassoc;
+//
+//  for (int i = 0; i < formalList->NumElements(); i++) {
+//    VarDecl *v = formalList->Nth(i);
+//    llvm::Type *varType = irgen->Converter(v->GetType());
+//    name = v->GetIdentifier()->GetName();
+//    llvm::Value *value = new llvm::AllocaInst(varType, name, irgen->GetBasicBlock());
+//    declassoc.decl = v;
+//    declassoc.value = value;
+//    newScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
+//  }
+//
+//  Node::symtable->symTable.push_back(newScope);
+//  for (int i = 0; i < this->stmts->NumElements(); i++) {
+//    Stmt *s = this->stmts->Nth(i);
+//    s->Emit();
+//  }
+//
+//  symtable->symTable.pop_back();
+//
   return NULL;
 }
 
@@ -161,7 +200,6 @@ void ForStmt::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *ForStmt::Emit() {
-  //TODO Logic for this is intense
   llvm::LLVMContext *context = irgen->GetContext();
   // creating the basicblocks
   llvm::BasicBlock *footerBB = llvm::BasicBlock::Create(*context, "footerBB", irgen->GetFunction());

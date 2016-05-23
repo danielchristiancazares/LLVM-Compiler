@@ -53,11 +53,14 @@ void VarExpr::PrintChildren(int indentLevel) {
 
 llvm::Value *VarExpr::Emit() {
   llvm::Value *value = NULL;
-
-  vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator
-  it = this->symtable->symTable.rbegin();
+  string s = this->GetIdentifier()->GetName();
+  vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = this->symtable->symTable.rbegin();
   for (; it != this->symtable->symTable.rend() && value == NULL; ++it) {
-    value = it->at(this->GetIdentifier()->GetName()).value;
+    map<string, SymbolTable::DeclAssoc> currMap = *it;
+    if(currMap.find(s) != currMap.end()) {
+      value = currMap.find(s)->second.value;
+      break;
+    }
   }
   llvm::Twine *twine = new llvm::Twine(this->GetIdentifier()->GetName());
   return new llvm::LoadInst(value, *twine, irgen->GetBasicBlock());
@@ -210,10 +213,14 @@ llvm::Value *AssignExpr::Emit() {
   llvm::Value *rhs = right->Emit();
 
   llvm::Value *lhs = NULL;
-  vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator
-  it = this->symtable->symTable.rbegin();
+  string s = lhsVar->GetIdentifier()->GetName();
+  vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = this->symtable->symTable.rbegin();
   for (; it != this->symtable->symTable.rend() && lhs == NULL; ++it) {
-    lhs = it->at(lhsVar->GetIdentifier()->GetName()).value;
+    map<string, SymbolTable::DeclAssoc> currMap = *it;
+    if(currMap.find(s) != currMap.end()) {
+      lhs = currMap.find(s)->second.value;
+      break;
+    }
   }
 
   if(this->op->IsOp("=")) {
@@ -237,10 +244,22 @@ llvm::Value *AssignExpr::Emit() {
     }
     return new llvm::StoreInst(rhsAdd, lhs, irgen->GetBasicBlock());
   }
+  return NULL;
 }
 
 llvm::Value *PostfixExpr::Emit() {
-  // TODO Help
+  VarExpr* lhsVar = dynamic_cast<VarExpr *>(left);
+  llvm::Value* lhs = left->Emit();
+  llvm::Type* type = lhs->getType();
+
+  if(this->op->IsOp("--")) {
+    if(type == irgen->GetIntType()) {
+      llvm::Value* subOne = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+      llvm::Value* pfSub = llvm::BinaryOperator::CreateSub(lhs, subOne, "", irgen->GetBasicBlock());
+      return new llvm::StoreInst(pfSub, lhs, irgen->GetBasicBlock());
+    }
+  }
+  return new llvm::LoadInst(lhs, "", irgen->GetBasicBlock());;
 }
 
 llvm::Value *FieldAccess::Emit() {

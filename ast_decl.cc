@@ -129,7 +129,6 @@ void FnDecl::PrintChildren(int indentLevel) {
   if(formals) { formals->PrintAll(indentLevel + 1, "(formals) "); }
   if(body) { body->Print(indentLevel + 1, "(body) "); }
 }
-
 llvm::Value *FnDecl::Emit() {
   // TODO
   // storing the return type
@@ -179,7 +178,7 @@ llvm::Value *FnDecl::Emit() {
     Node::symtable->symTable.push_back(newScope);
 
     StmtBlock *stmtblock = dynamic_cast<StmtBlock *>(this->body);
-    stmtblock->Emit();
+    stmtblock->EmitFromFunc();
   }
   else {
     // inserting the function name to the current scope
@@ -208,7 +207,7 @@ llvm::Value *FnDecl::Emit() {
     */
 
     StmtBlock *stmtblock = dynamic_cast<StmtBlock *>(this->body);
-    stmtblock->Emit();
+    stmtblock->EmitFromFunc();
   }
 
   return f;
