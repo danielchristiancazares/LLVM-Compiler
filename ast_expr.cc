@@ -52,7 +52,13 @@ void VarExpr::PrintChildren (int indentLevel) {
 }
 
 llvm::Value *VarExpr::Emit () {
-  return NULL; //TODO Fix this
+  llvm::Value* value = NULL;
+
+  for(vector< map<string, DeclAssoc> >::iterator it = this->symtable.rbegin(); it != this->symTable.rend() && mem == NULL; ++it) {
+    value = it->at(this->GetIdentifier ()->GetName ()).second.value;
+  }
+  llvm::Twine *twine = new llvm::Twine(this->GetIdentifier ()->GetName ());
+  return new llvm::LoadInst(mem, *twine, irgen->GetBasicBlock());
 }
 
 Operator::Operator (yyltype loc, const char *tok) : Node (loc) {
