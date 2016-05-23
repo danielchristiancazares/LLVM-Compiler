@@ -160,23 +160,7 @@ void Call::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *EqualityExpr::Emit() {
-  llvm::Value* lhs = left->Emit();
-  llvm::Value* rhs = right->Emit();
-  llvm::Type* type = l->getType();
-
-  if(type == irgen->GetIntType()) {
-    if(this->op->IsOp("==")) {
-      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_EQ, left, right, "", irgen->GetBasicBlock());
-    } else if(this->op->IsOp("!=")) {
-      return llvm::CmpInst::Create(llvm::CmpInst::ICmp, llvm::ICmpInst::ICMP_NEQ, left, right, "", irgen->GetBasicBlock());
-    }
-  } else if(type == irgen->GetFloatType()) {
-    if(this->op->IsOp("==")) {
-      return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::ICmpInst::FCMP_OEQ, left, right, "", irgen->GetBasicBlock());
-    } else if(this->op->IsOp("!=")) {
-      return llvm::CmpInst::Create(llvm::CmpInst::FCmp, llvm::ICmpInst::FCMP_ONE, left, right, "", irgen->GetBasicBlock());
-    }
-  }
+  
   return NULL;
 }
 

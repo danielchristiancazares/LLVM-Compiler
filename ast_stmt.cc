@@ -278,7 +278,7 @@ llvm::Value *IfStmt::Emit() {
   llvm::Value *cond = this->test->Emit();
   llvm::LLVMContext *context = irgen->GetContext();
   llvm::BasicBlock *footerBB = llvm::BasicBlock::Create(*context, "footerBB", irgen->GetFunction());
-  llvm::BasicBlock *elseBB;
+  llvm::BasicBlock *elseBB = NULL;
   if(this->elseBody != NULL) {
     elseBB = llvm::BasicBlock::Create(*context, "elseBB", irgen->GetFunction());
   }
@@ -313,6 +313,14 @@ void ReturnStmt::PrintChildren(int indentLevel) {
 
 llvm::Value *ReturnStmt::Emit() {
   // TODO Check the expression and perform something depending on that?
+  llvm::LLVMContext *context = irgen->GetContext();
+  if (this->expr != NULL) {
+    llvm::Value *val = this->expr->Emit();
+    llvm::ReturnInst::Create(*context, val, irgen->GetBasicBlock());
+  }
+  else {
+    llvm::ReturnInst::Create(*context, irgen->GetBasicBlock());
+  }
   return NULL;
 }
 
@@ -354,6 +362,19 @@ void SwitchStmt::PrintChildren(int indentLevel) {
 
 llvm::Value *SwitchStmt::Emit() {
   //TODO OMG What do here
+  /*
+    Find  all the cases /default  case  and create  BB  for each  of  them  
+    Emit  of  Expression  
+    Create  Switch  instrucCon  
+    For each  case  
+    ‘addCase’ to  Switch  instrucCon
+    Emit  for statement in  case  statement 
+    Create  terminator  instrucCon  
+  */
+  for(int i = 0; i < this->cases->NumElements(); i++) {
+    
+  }
+
   return NULL;
 }
 
