@@ -110,17 +110,6 @@ llvm::Value *StmtBlock::EmitFromFunc() {
     Delete  scope
   */
   // get formals for local variables
-  std::cerr << "Size of symbol table: " << this->stmts->NumElements() << endl;
-
-  for(int i = 0; i < this->stmts->NumElements(); ++i) {
-    if(strcmp(stmts->Nth(i)->GetPrintNameForNode(),"StmtBlock")) {
-      stmts->Nth(i)->Emit();
-    } else {
-      symtable->symTable.push_back(new map <string, SymbolTable::DeclAssoc>());
-      stmts->Nth(i)->Emit();
-      symtable->symTable.pop_back();
-    }
-  }
 
 //   = symtable->symTable.front();
 //  map <string, SymbolTable::DeclAssoc> newScope;
@@ -348,7 +337,6 @@ void ReturnStmt::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *ReturnStmt::Emit() {
-  // TODO Check the expression and perform something depending on that?
   llvm::LLVMContext *context = irgen->GetContext();
   if (this->expr != NULL) {
     llvm::Value *val = this->expr->Emit();
@@ -397,7 +385,6 @@ void SwitchStmt::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *SwitchStmt::Emit() {
-  //TODO OMG What do here
   /*
     Find  all the cases /default  case  and create  BB  for each  of  them  
     Emit  of  Expression  
@@ -407,22 +394,16 @@ llvm::Value *SwitchStmt::Emit() {
     Emit  for statement in  case  statement 
     Create  terminator  instrucCon  
   */
-  for(int i = 0; i < this->cases->NumElements(); i++) {
-    
-  }
 
   return NULL;
 }
 
 llvm::Value *BreakStmt::Emit() {
-  //TODO Create a BasicBlock within SwitchStmt to declare whether or not
-  //TODO to exit.
   llvm::BranchInst::Create (Node::breakStack->back(), irgen->GetBasicBlock ());
   return NULL;
 }
 
 llvm::Value *ContinueStmt::Emit() {
-  //TODO Same as above.
   llvm::BranchInst::Create (Node::continueStack->back(), irgen->GetBasicBlock ());
   return NULL;
 }
