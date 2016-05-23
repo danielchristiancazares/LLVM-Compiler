@@ -8,40 +8,40 @@
 #include "symtable.h"
 #include "irgen.h"
 
-Decl::Decl (Identifier *n) : Node (*n->GetLocation ()) {
+Decl::Decl(Identifier *n) : Node(*n->GetLocation()) {
   Assert(n != NULL);
-  (id = n)->SetParent (this);
+  (id = n)->SetParent(this);
 }
 
-VarDecl::VarDecl (Identifier *n, Type *t, Expr *e) : Decl (n) {
+VarDecl::VarDecl(Identifier *n, Type *t, Expr *e) : Decl(n) {
   Assert(n != NULL && t != NULL);
-  (type = t)->SetParent (this);
-  if(e) { (assignTo = e)->SetParent (this); }
+  (type = t)->SetParent(this);
+  if(e) { (assignTo = e)->SetParent(this); }
   typeq = NULL;
 }
 
-VarDecl::VarDecl (Identifier *n, TypeQualifier *tq, Expr *e) : Decl (n) {
+VarDecl::VarDecl(Identifier *n, TypeQualifier *tq, Expr *e) : Decl(n) {
   Assert(n != NULL && tq != NULL);
-  (typeq = tq)->SetParent (this);
-  if(e) { (assignTo = e)->SetParent (this); }
+  (typeq = tq)->SetParent(this);
+  if(e) { (assignTo = e)->SetParent(this); }
   type = NULL;
 }
 
-VarDecl::VarDecl (Identifier *n, Type *t, TypeQualifier *tq, Expr *e) : Decl (n) {
+VarDecl::VarDecl(Identifier *n, Type *t, TypeQualifier *tq, Expr *e) : Decl(n) {
   Assert(n != NULL && t != NULL && tq != NULL);
-  (type = t)->SetParent (this);
-  (typeq = tq)->SetParent (this);
-  if(e) { (assignTo = e)->SetParent (this); }
+  (type = t)->SetParent(this);
+  (typeq = tq)->SetParent(this);
+  if(e) { (assignTo = e)->SetParent(this); }
 }
 
-void VarDecl::PrintChildren (int indentLevel) {
-  if(typeq) { typeq->Print (indentLevel + 1); }
-  if(type) { type->Print (indentLevel + 1); }
-  if(id) { id->Print (indentLevel + 1); }
-  if(assignTo) { assignTo->Print (indentLevel + 1, "(initializer) "); }
+void VarDecl::PrintChildren(int indentLevel) {
+  if(typeq) { typeq->Print(indentLevel + 1); }
+  if(type) { type->Print(indentLevel + 1); }
+  if(id) { id->Print(indentLevel + 1); }
+  if(assignTo) { assignTo->Print(indentLevel + 1, "(initializer) "); }
 }
 
-llvm::Value *VarDecl::Emit () {
+llvm::Value *VarDecl::Emit() {
   llvm::Value *value = NULL;
   char *name;
   bool isConstant;
@@ -71,16 +71,16 @@ llvm::Value *VarDecl::Emit () {
   llvm::Module *mod = irgen->GetOrCreateModule("irgen.bc");
 
   if(Node::symtable->symTable.empty()) {
-    map<string, SymbolTable::DeclAssoc> newMap;
+    map <string, SymbolTable::DeclAssoc> newMap;
     value = new llvm::GlobalVariable(*mod, type, isConstant, llvm::GlobalValue::ExternalLinkage, constant, name);
     declassoc.value = value;
     declassoc.decl = this;
     declassoc.isGlobal = true;
     newMap.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
     Node::symtable->symTable.push_back(newMap);
-  } 
+  }
   else {
-    map<string, SymbolTable::DeclAssoc> currentScope = Node::symtable->symTable.back();
+    map <string, SymbolTable::DeclAssoc> currentScope = Node::symtable->symTable.back();
     Node::symtable->symTable.pop_back();
     string currentVar = this->GetIdentifier()->GetName();
 
@@ -99,44 +99,44 @@ llvm::Value *VarDecl::Emit () {
     currentScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
     Node::symtable->symTable.push_back(currentScope);
   }
-  
-  return value;  
+
+  return value;
 }
 
-FnDecl::FnDecl (Identifier *n, Type *r, List<VarDecl *> *d) : Decl (n) {
+FnDecl::FnDecl(Identifier *n, Type *r, List<VarDecl *> *d) : Decl(n) {
   Assert(n != NULL && r != NULL && d != NULL);
-  (returnType = r)->SetParent (this);
-  (formals = d)->SetParentAll (this);
+  (returnType = r)->SetParent(this);
+  (formals = d)->SetParentAll(this);
   body = NULL;
   returnTypeq = NULL;
 }
 
-FnDecl::FnDecl (Identifier *n, Type *r, TypeQualifier *rq, List<VarDecl *> *d) : Decl (n) {
+FnDecl::FnDecl(Identifier *n, Type *r, TypeQualifier *rq, List<VarDecl *> *d) : Decl(n) {
   Assert(n != NULL && r != NULL && rq != NULL && d != NULL);
-  (returnType = r)->SetParent (this);
-  (returnTypeq = rq)->SetParent (this);
-  (formals = d)->SetParentAll (this);
+  (returnType = r)->SetParent(this);
+  (returnTypeq = rq)->SetParent(this);
+  (formals = d)->SetParentAll(this);
   body = NULL;
 }
 
-void FnDecl::SetFunctionBody (Stmt *b) {
-  (body = b)->SetParent (this);
+void FnDecl::SetFunctionBody(Stmt *b) {
+  (body = b)->SetParent(this);
 }
 
-void FnDecl::PrintChildren (int indentLevel) {
-  if(returnType) { returnType->Print (indentLevel + 1, "(return type) "); }
-  if(id) { id->Print (indentLevel + 1); }
-  if(formals) { formals->PrintAll (indentLevel + 1, "(formals) "); }
-  if(body) { body->Print (indentLevel + 1, "(body) "); }
+void FnDecl::PrintChildren(int indentLevel) {
+  if(returnType) { returnType->Print(indentLevel + 1, "(return type) "); }
+  if(id) { id->Print(indentLevel + 1); }
+  if(formals) { formals->PrintAll(indentLevel + 1, "(formals) "); }
+  if(body) { body->Print(indentLevel + 1, "(body) "); }
 }
 
-llvm::Value *FnDecl::Emit () {
+llvm::Value *FnDecl::Emit() {
   // TODO
   // storing the return type
   llvm::Type *returnType = irgen->Converter(this->returnType);
 
   // argtypes
-  vector<llvm::Type*> argTypes;
+  vector < llvm::Type * > argTypes;
   llvm::Type *tempType;
 
   //go through the formals
@@ -147,13 +147,13 @@ llvm::Value *FnDecl::Emit () {
   }
 
   // make an arrayRef
-  llvm::ArrayRef<llvm::Type*> argArray(argTypes);
+  llvm::ArrayRef<llvm::Type *> argArray(argTypes);
   llvm::FunctionType *funcTy = llvm::FunctionType::get(returnType, argArray, false);
 
   // Create the function and insert it into module
   string name = this->GetIdentifier()->GetName();
   llvm::Module *mod = irgen->GetOrCreateModule("irgen.bc");
-  llvm::Function *f = llvm::cast<llvm::Function>(mod->getOrInsertFunction(name, funcTy));     
+  llvm::Function *f = llvm::cast<llvm::Function>(mod->getOrInsertFunction(name, funcTy));
 
   // starting to loop through function pointer
   string argName;
@@ -172,14 +172,14 @@ llvm::Value *FnDecl::Emit () {
   irgen->SetBasicBlock(bb);
 
   // inserting the function name to the current scope
-  map<string, SymbolTable::DeclAssoc> currentScope = Node::symtable->symTable.back();
+  map <string, SymbolTable::DeclAssoc> currentScope = Node::symtable->symTable.back();
   Node::symtable->symTable.pop_back();
   SymbolTable::DeclAssoc declassoc;
   declassoc.decl = this;
   declassoc.value = f;
   currentScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
   Node::symtable->symTable.push_back(currentScope);
-  
+
   /*
   // creating a new scope for the formals
   map<string, SymbolTable::DeclAssoc> newScope;
@@ -195,8 +195,8 @@ llvm::Value *FnDecl::Emit () {
   // pushing new scope
   Node::symtable->symTable.push_back(newScope);
   */
-  
-  StmtBlock *stmtblock = dynamic_cast<StmtBlock*>(this->body);
+
+  StmtBlock *stmtblock = dynamic_cast<StmtBlock *>(this->body);
   stmtblock->Emit();
 
   return f;
