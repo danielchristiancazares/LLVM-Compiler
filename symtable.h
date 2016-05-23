@@ -21,7 +21,7 @@ class SymbolTable {
       llvm::Value *value;
   };
 
-  vector <map<string, DeclAssoc>> symTable;
+  vector< map<string, DeclAssoc> > symTable;
   int loopCounter;
   bool insideSwitch;
   bool returnIsSeen;
