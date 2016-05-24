@@ -32,8 +32,8 @@ llvm::Value *Program::Emit() {
   for (int i = 0; i < decls->NumElements(); ++i) {
     Decl *decl = decls->Nth(i);
     decl->Emit();
+    mod->dump();
   }
-
 
 
 // create a function signature
@@ -93,43 +93,18 @@ llvm::Value *StmtBlock::Emit() {
     s->Emit();
   }
 
+
   Node::symtable->symTable.pop_back();
 
   return NULL;
 }
 
 llvm::Value *StmtBlock::EmitFromFunc() {
-  /*
-    Get the current scope
-    For each  element in scope
-    Create  local variable  (as in  VarDecl::Emit)
-    Pop the current scope
-    Create  new scope
-    For each  statement 's' in  body  of  funcCon:
-    s->Emit()
-    Delete  scope
-  */
+  
   // get formals for local variables
-  map <string, SymbolTable::DeclAssoc> tempScope = Node::symtable->symTable.back();
-  map <string, SymbolTable::DeclAssoc> newScope;
-
-  FnDecl *f = dynamic_cast<FnDecl *>(tempScope.begin()->second.decl);
-
-  List<VarDecl *> *formalList = f->GetFormals();
-  string name;
-  SymbolTable::DeclAssoc declassoc;
-
-  for (int i = 0; i < formalList->NumElements(); i++) {
-    VarDecl *v = formalList->Nth(i);
-    llvm::Type *varType = irgen->Converter(v->GetType());
-    name = v->GetIdentifier()->GetName();
-    llvm::Value *value = new llvm::AllocaInst(varType, name, irgen->GetBasicBlock());
-    declassoc.decl = v;
-    declassoc.value = value;
-    newScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
-  }
-
-  Node::symtable->symTable.push_back(newScope);
+  //cerr << "StmtBlock:: EmitFromFunc" << endl;
+  
+  //cerr << "number of statements is " << this->stmts->NumElements() << endl;
   for (int i = 0; i < this->stmts->NumElements(); i++) {
     Stmt *s = this->stmts->Nth(i);
     s->Emit();

@@ -42,6 +42,7 @@ void VarDecl::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *VarDecl::Emit() {
+  //cerr << "VarDecl is called" << endl;
   llvm::Value *value = NULL;
   char *name;
   bool isConstant;
@@ -76,6 +77,9 @@ llvm::Value *VarDecl::Emit() {
     declassoc.value = value;
     declassoc.decl = this;
     declassoc.isGlobal = true;
+    //cerr << "TABLE IS EMPTY!!!" << endl;
+    //cerr << "global variable declared" << endl;
+    //cerr << "This is what the declass global is" << declassoc.isGlobal << endl;
     newMap.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
     Node::symtable->symTable.push_back(newMap);
   }
@@ -86,13 +90,17 @@ llvm::Value *VarDecl::Emit() {
 
     // checks if this is a global scope
     SymbolTable::DeclAssoc currDeclAssoc = currentScope.rbegin()->second;
+    //cerr << "TABLE IS NOT EMPTY!!!" << endl;
+    //cerr << "This is what the declass global is" << currentScope.rbegin()->second.isGlobal << endl;
     if(currDeclAssoc.isGlobal == true) {
+      //cerr << "global variable declared" << endl;
       value = new llvm::GlobalVariable(*mod, type, isConstant, llvm::GlobalValue::ExternalLinkage, constant, name);
       declassoc.isGlobal = true;
     }
     else {
-      declassoc.isGlobal = false;
+      //cerr << "local var declared" << endl;
       value = new llvm::AllocaInst(type, name, irgen->GetBasicBlock());
+      new llvm::StoreInst(constant, value, irgen->GetBasicBlock());
     }
     declassoc.value = value;
     declassoc.decl = this;
@@ -129,17 +137,22 @@ void FnDecl::PrintChildren(int indentLevel) {
   if(formals) { formals->PrintAll(indentLevel + 1, "(formals) "); }
   if(body) { body->Print(indentLevel + 1, "(body) "); }
 }
+
 llvm::Value *FnDecl::Emit() {
   // TODO
+  //cerr << "FnDecl is called" << endl;
   // storing the return type
   llvm::Type *returnType = irgen->Converter(this->returnType);
 
   // argtypes
-  vector < llvm::Type * > argTypes;
+  vector <llvm::Type *> argTypes;
   llvm::Type *tempType;
+  llvm::Value *value;
+  SymbolTable::DeclAssoc declassoc;
 
   //go through the formals
   for (int i = 0; i < this->formals->NumElements(); i++) {
+    //cerr << "Populing the formals1" << endl;
     VarDecl *v = this->formals->Nth(i);
     tempType = irgen->Converter(v->GetType());
     argTypes.push_back(tempType);
@@ -152,63 +165,68 @@ llvm::Value *FnDecl::Emit() {
   // Create the function and insert it into module
   string name = this->GetIdentifier()->GetName();
   llvm::Module *mod = irgen->GetOrCreateModule("irgen.bc");
-  llvm::Function *f = llvm::cast<llvm::Function>(mod->getOrInsertFunction(name, funcTy));
+  llvm::StringRef s = llvm::StringRef(name);
+  llvm::Function *f = llvm::cast<llvm::Function>(mod->getOrInsertFunction(s, funcTy));
 
   // starting to loop through function pointer
   string argName;
-  llvm::Argument *arg = f->arg_begin();
-  for (int i = 0; i < this->formals->NumElements(); i++, arg++) {
+  llvm::Function::arg_iterator it = f->arg_begin();
+  for (int i = 0; i < this->formals->NumElements(); i++) {
+    //cerr << "Populing the formals2" << endl;
     VarDecl *v = this->formals->Nth(i);
+    v->Emit();
     argName = v->GetIdentifier()->GetName();
     // set the name
-    arg->setName(argName);
+    it->setName(argName);
+    it++;
   }
-
+  
   // insert a block into the function
   // create a basicBlock
   llvm::LLVMContext *context = irgen->GetContext();
   llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "entry", f, irgen->GetBasicBlock());
   irgen->SetBasicBlock(bb);
   if (Node::symtable->symTable.empty()) {
+    //cerr << "FnDecl, EMPTY TABLE" << endl;
+    string name = this->GetIdentifier()->GetName();
     map <string, SymbolTable::DeclAssoc> newScope;
-    SymbolTable::DeclAssoc declassoc;
     declassoc.decl = this;
     declassoc.value = f;
     newScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
     Node::symtable->symTable.push_back(newScope);
-
-    StmtBlock *stmtblock = dynamic_cast<StmtBlock *>(this->body);
-    stmtblock->EmitFromFunc();
   }
   else {
     // inserting the function name to the current scope
+    //cerr << "FnDecl, NOT EMPTY TABLE" << endl;
     map <string, SymbolTable::DeclAssoc> currentScope = Node::symtable->symTable.back();
     Node::symtable->symTable.pop_back();
-    SymbolTable::DeclAssoc declassoc;
     declassoc.decl = this;
     declassoc.value = f;
     currentScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
     Node::symtable->symTable.push_back(currentScope);
-
-    /*
-    // creating a new scope for the formals
-    map<string, SymbolTable::DeclAssoc> newScope;
-    for(int i = 0; i < this->formals->NumElements(); i++) {
-      VarDecl *v = this->formals->Nth(i);
-      name = v->GetIdentifier()->GetName();
-      tempType = irgen->Converter(v->GetType());
-      declassoc.value = tempType;
-      declassoc.decl = v;
-      declassoc.isGlobal = false;
-      newScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
-    }
-    // pushing new scope
-    Node::symtable->symTable.push_back(newScope);
-    */
-
-    StmtBlock *stmtblock = dynamic_cast<StmtBlock *>(this->body);
-    stmtblock->EmitFromFunc();
   }
+
+  
+  // creating a new scope for the formals
+  map<string, SymbolTable::DeclAssoc> newScope;
+  llvm::Function::arg_iterator arg = f->arg_begin();
+  for(int i = 0; i < this->formals->NumElements(); i++) {
+    VarDecl *v = this->formals->Nth(i);
+    name = v->GetIdentifier()->GetName();
+    tempType = irgen->Converter(v->GetType());
+    value = new llvm::AllocaInst(tempType, name, irgen->GetBasicBlock());
+    new llvm::StoreInst(arg, value, irgen->GetBasicBlock());
+    declassoc.value = value;
+    declassoc.decl = v;
+    declassoc.isGlobal = false;
+    newScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
+    it++;
+  }
+  // pushing new scope
+  Node::symtable->symTable.push_back(newScope);
+
+  StmtBlock *stmtblock = dynamic_cast<StmtBlock *>(this->body);
+  stmtblock->EmitFromFunc();
 
   return f;
 
