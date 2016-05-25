@@ -329,6 +329,7 @@ llvm::Value *ReturnStmt::Emit() {
   if (this->expr != NULL) {
     val = this->expr->Emit();
     //cerr << "expr is not null" << endl;
+    cerr << "return type is " << val << endl;
     llvm::ReturnInst::Create(*context, val, irgen->GetBasicBlock());
   }
   else {
