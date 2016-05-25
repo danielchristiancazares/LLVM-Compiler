@@ -260,7 +260,7 @@ llvm::Value *PostfixExpr::Emit() {
   llvm::Value* lhs = left->Emit();
   llvm::Type* type = lhs->getType();
 
-  
+  valToRet = new llvm::LoadInst(value, "", irgen->GetBasicBlock());
   string s = dynamic_cast<VarExpr*>(left)->GetIdentifier()->GetName();
   vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = Node::symtable->symTable.rbegin();
   for (; it != Node::symtable->symTable.rend(); ++it) {
@@ -271,18 +271,18 @@ llvm::Value *PostfixExpr::Emit() {
       break;
     }
   }
-  
+
   if(this->op->IsOp("--")) {
     if(type == irgen->GetIntType()) {
-      //cerr << "Store is being called from postfixx!" << endl;
+      std::cerr << "Store is being called from postfixx!" << endl;
       llvm::Value* subOne = llvm::ConstantInt::get(irgen->GetIntType(), 1);
       llvm::Value* pfSub = llvm::BinaryOperator::CreateSub(lhs, subOne, "", irgen->GetBasicBlock());
-      //cerr << "Loading the value to return!" << endl;
-      //valToRet = new llvm::LoadInst(value, "", irgen->GetBasicBlock());
+      std::cerr << "Loading the value to return!" << endl;
       new llvm::StoreInst(pfSub, value, irgen->GetBasicBlock());
+      return valToRet;
     }
   }
-  return lhs;
+  return valToRet;
 }
 
 llvm::Value *FieldAccess::Emit() {
