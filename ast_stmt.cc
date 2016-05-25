@@ -32,8 +32,8 @@ llvm::Value *Program::Emit() {
   for (int i = 0; i < decls->NumElements(); ++i) {
     Decl *decl = decls->Nth(i);
     decl->Emit();
+    mod->dump();
   }
-
 
 
 // create a function signature
@@ -93,48 +93,37 @@ llvm::Value *StmtBlock::Emit() {
     s->Emit();
   }
 
+  vector< map<string, SymbolTable::DeclAssoc> >::iterator it = Node::symtable->symTable.begin();
+  for(; it != Node::symtable->symTable.end(); it++) {
+    map<string, SymbolTable::DeclAssoc> currMap = *it;
+    for(map<string, SymbolTable::DeclAssoc>::iterator it2 = currMap.begin(); it2 != currMap.end(); it2++) {
+      cerr << "The string is " << it2->first << endl;
+    }
+    cerr << "   NEW   MAP    " << endl;
+  }
   Node::symtable->symTable.pop_back();
 
   return NULL;
 }
 
 llvm::Value *StmtBlock::EmitFromFunc() {
-  /*
-    Get the current scope
-    For each  element in scope
-    Create  local variable  (as in  VarDecl::Emit)
-    Pop the current scope
-    Create  new scope
-    For each  statement 's' in  body  of  funcCon:
-    s->Emit()
-    Delete  scope
-  */
+  
   // get formals for local variables
-  map <string, SymbolTable::DeclAssoc> tempScope = Node::symtable->symTable.back();
-  map <string, SymbolTable::DeclAssoc> newScope;
-
-  FnDecl *f = dynamic_cast<FnDecl *>(tempScope.begin()->second.decl);
-
-  List<VarDecl *> *formalList = f->GetFormals();
-  string name;
-  SymbolTable::DeclAssoc declassoc;
-
-  for (int i = 0; i < formalList->NumElements(); i++) {
-    VarDecl *v = formalList->Nth(i);
-    llvm::Type *varType = irgen->Converter(v->GetType());
-    name = v->GetIdentifier()->GetName();
-    llvm::Value *value = new llvm::AllocaInst(varType, name, irgen->GetBasicBlock());
-    declassoc.decl = v;
-    declassoc.value = value;
-    newScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
-  }
-
-  Node::symtable->symTable.push_back(newScope);
+  //cerr << "StmtBlock:: EmitFromFunc" << endl;
+  
+  //cerr << "number of statements is " << this->stmts->NumElements() << endl;
   for (int i = 0; i < this->stmts->NumElements(); i++) {
     Stmt *s = this->stmts->Nth(i);
     s->Emit();
   }
-
+  vector< map<string, SymbolTable::DeclAssoc> >::iterator it = Node::symtable->symTable.begin();
+  for(; it != Node::symtable->symTable.end(); it++) {
+    map<string, SymbolTable::DeclAssoc> currMap = *it;
+    for(map<string, SymbolTable::DeclAssoc>::iterator it2 = currMap.begin(); it2 != currMap.end(); it2++) {
+      cerr << "The string is " << it2->first << endl;
+    }
+    cerr << "   NEW   MAP    " << endl;
+  }
   Node::symtable->symTable.pop_back();
 
   return NULL;
@@ -334,12 +323,17 @@ void ReturnStmt::PrintChildren(int indentLevel) {
 
 llvm::Value *ReturnStmt::Emit() {
   // TODO Check the expression and perform something depending on that?
+  //cerr << "returnEmit called" << endl;
   llvm::LLVMContext *context = irgen->GetContext();
+  llvm::Value *val;
   if (this->expr != NULL) {
-    llvm::Value *val = this->expr->Emit();
+    val = this->expr->Emit();
+    //cerr << "expr is not null" << endl;
+    cerr << "return type is " << val << endl;
     llvm::ReturnInst::Create(*context, val, irgen->GetBasicBlock());
   }
   else {
+    //cerr << "expr is null" << endl;
     llvm::ReturnInst::Create(*context, irgen->GetBasicBlock());
   }
   return NULL;

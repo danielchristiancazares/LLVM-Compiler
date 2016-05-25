@@ -17,8 +17,8 @@ class SymbolTable {
  public:
   struct DeclAssoc {
       bool isGlobal;
-      Decl *decl = NULL;
-      llvm::Value *value = NULL;
+      Decl *decl;
+      llvm::Value *value;
   };
 
   vector< map<string, DeclAssoc> > symTable;
