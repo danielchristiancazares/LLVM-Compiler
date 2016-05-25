@@ -54,16 +54,20 @@ void VarExpr::PrintChildren(int indentLevel) {
 llvm::Value *VarExpr::Emit() {
   llvm::Value *value = NULL;
   string s = this->GetIdentifier()->GetName();
-  vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = this->symtable->symTable.rbegin();
-  for (; it != this->symtable->symTable.rend() && value == NULL; ++it) {
+  vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = Node::symtable->symTable.rbegin();
+  for (; it != Node::symtable->symTable.rend(); ++it) {
     map<string, SymbolTable::DeclAssoc> currMap = *it;
     if(currMap.find(s) != currMap.end()) {
+      //cerr << "Load called from varepr!!" << endl;
       value = currMap.find(s)->second.value;
-      break;
+      //cerr << "the value in varexpr is " << value << endl;
+      llvm::Twine *twine = new llvm::Twine(this->GetIdentifier()->GetName());
+      cerr << "Varexpr Load" << endl;
+      return new llvm::LoadInst(value, *twine, irgen->GetBasicBlock());
     }
   }
-  llvm::Twine *twine = new llvm::Twine(this->GetIdentifier()->GetName());
-  return new llvm::LoadInst(value, *twine, irgen->GetBasicBlock());
+  //cerr << "SHIT WAS NOT FOUND" << endl;
+  return NULL;
 }
 
 Operator::Operator(yyltype loc, const char *tok) : Node(loc) {
@@ -250,16 +254,34 @@ llvm::Value *AssignExpr::Emit() {
 llvm::Value *PostfixExpr::Emit() {
   VarExpr* lhsVar = dynamic_cast<VarExpr *>(left);
   llvm::Value* lhs = left->Emit();
+  llvm::Value* value = NULL;
   llvm::Type* type = lhs->getType();
+  llvm::Value* valToRet = NULL;
+
+  string s = dynamic_cast<VarExpr*>(left)->GetIdentifier()->GetName();
+  vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = Node::symtable->symTable.rbegin();
+  for (; it != Node::symtable->symTable.rend(); ++it) {
+    map<string, SymbolTable::DeclAssoc> currMap = *it;
+    if(currMap.find(s) != currMap.end()) {
+      //cerr << "PostFix::finding value from symtable!!" << endl;
+      value = currMap.find(s)->second.value;
+      break;
+    }
+  }
+  
+  cerr << "PostFix Load" << endl;
 
   if(this->op->IsOp("--")) {
     if(type == irgen->GetIntType()) {
+      //cerr << "Store is being called from postfixx!" << endl;
       llvm::Value* subOne = llvm::ConstantInt::get(irgen->GetIntType(), 1);
       llvm::Value* pfSub = llvm::BinaryOperator::CreateSub(lhs, subOne, "", irgen->GetBasicBlock());
-      return new llvm::StoreInst(pfSub, lhs, irgen->GetBasicBlock());
+      //valToRet = new llvm::LoadInst(value, "", irgen->GetBasicBlock());
+
+      new llvm::StoreInst(pfSub, value, irgen->GetBasicBlock());
     }
   }
-  return new llvm::LoadInst(lhs, "", irgen->GetBasicBlock());;
+  return value;
 }
 
 llvm::Value *FieldAccess::Emit() {

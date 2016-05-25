@@ -93,7 +93,14 @@ llvm::Value *StmtBlock::Emit() {
     s->Emit();
   }
 
-
+  vector< map<string, SymbolTable::DeclAssoc> >::iterator it = Node::symtable->symTable.begin();
+  for(; it != Node::symtable->symTable.end(); it++) {
+    map<string, SymbolTable::DeclAssoc> currMap = *it;
+    for(map<string, SymbolTable::DeclAssoc>::iterator it2 = currMap.begin(); it2 != currMap.end(); it2++) {
+      cerr << "The string is " << it2->first << endl;
+    }
+    cerr << "   NEW   MAP    " << endl;
+  }
   Node::symtable->symTable.pop_back();
 
   return NULL;
@@ -109,7 +116,14 @@ llvm::Value *StmtBlock::EmitFromFunc() {
     Stmt *s = this->stmts->Nth(i);
     s->Emit();
   }
-
+  vector< map<string, SymbolTable::DeclAssoc> >::iterator it = Node::symtable->symTable.begin();
+  for(; it != Node::symtable->symTable.end(); it++) {
+    map<string, SymbolTable::DeclAssoc> currMap = *it;
+    for(map<string, SymbolTable::DeclAssoc>::iterator it2 = currMap.begin(); it2 != currMap.end(); it2++) {
+      cerr << "The string is " << it2->first << endl;
+    }
+    cerr << "   NEW   MAP    " << endl;
+  }
   Node::symtable->symTable.pop_back();
 
   return NULL;
@@ -309,12 +323,16 @@ void ReturnStmt::PrintChildren(int indentLevel) {
 
 llvm::Value *ReturnStmt::Emit() {
   // TODO Check the expression and perform something depending on that?
+  //cerr << "returnEmit called" << endl;
   llvm::LLVMContext *context = irgen->GetContext();
+  llvm::Value *val;
   if (this->expr != NULL) {
-    llvm::Value *val = this->expr->Emit();
+    val = this->expr->Emit();
+    //cerr << "expr is not null" << endl;
     llvm::ReturnInst::Create(*context, val, irgen->GetBasicBlock());
   }
   else {
+    //cerr << "expr is null" << endl;
     llvm::ReturnInst::Create(*context, irgen->GetBasicBlock());
   }
   return NULL;
