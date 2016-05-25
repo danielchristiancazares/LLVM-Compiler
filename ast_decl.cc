@@ -104,7 +104,7 @@ llvm::Value *VarDecl::Emit() {
     }
     declassoc.value = value;
     declassoc.decl = this;
-    currentScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
+    currentScope.insert(map<string, SymbolTable::DeclAssoc>(name, declassoc));
     Node::symtable->symTable.push_back(currentScope);
   }
 
