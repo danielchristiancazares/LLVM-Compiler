@@ -156,7 +156,7 @@ llvm::Value *FnDecl::Emit() {
 
   // starting to loop through function pointer
   string argName;
-  llvm::Argument *arg = f->arg_begin();
+  llvm::Function::arg_iterator arg = f->arg_begin();
   for (int i = 0; i < this->formals->NumElements(); i++, arg++) {
     VarDecl *v = this->formals->Nth(i);
     argName = v->GetIdentifier()->GetName();
