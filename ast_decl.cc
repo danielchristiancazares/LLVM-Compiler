@@ -60,20 +60,13 @@ llvm::Value *VarDecl::Emit() {
     constant = llvm::Constant::getNullValue(type);
   }
 
-  if(this->typeq->constTypeQualifier != NULL) {
-    isConstant = true;
-  }
-  else {
-    isConstant = false;
-  }
-
   name = this->GetIdentifier()->GetName();
 
   llvm::Module *mod = irgen->GetOrCreateModule("irgen.bc");
 
   if(Node::symtable->symTable.empty()) {
     map <string, SymbolTable::DeclAssoc> newMap;
-    value = new llvm::GlobalVariable(*mod, type, isConstant, llvm::GlobalValue::ExternalLinkage, constant, name);
+    value = new llvm::GlobalVariable(*mod, type, false, llvm::GlobalValue::ExternalLinkage, constant, name);
     declassoc.value = value;
     declassoc.decl = this;
     declassoc.isGlobal = true;

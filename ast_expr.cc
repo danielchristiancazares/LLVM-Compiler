@@ -62,7 +62,7 @@ llvm::Value *VarExpr::Emit() {
       value = currMap.find(s)->second.value;
       //cerr << "the value in varexpr is " << value << endl;
       llvm::Twine *twine = new llvm::Twine(this->GetIdentifier()->GetName());
-      cerr << "Varexpr Load" << endl;
+      //cerr << "Varexpr Load" << endl;
       return new llvm::LoadInst(value, *twine, irgen->GetBasicBlock());
     }
   }
@@ -213,7 +213,7 @@ llvm::Value *LogicalExpr::Emit() {
 }
 
 llvm::Value *AssignExpr::Emit() {
-  cerr << "Calling assign" << endl;
+  //cerr << "Calling assign" << endl;
   VarExpr *lhsVar = dynamic_cast<VarExpr *>(left);
   llvm::Value *rhs = right->Emit();
 
@@ -254,7 +254,7 @@ llvm::Value *AssignExpr::Emit() {
 
 llvm::Value *PostfixExpr::Emit() {
   VarExpr* lhsVar = dynamic_cast<VarExpr *>(left);
-  cerr << "calling varexpr load from postFix" << endl;
+  //cerr << "calling varexpr load from postFix" << endl;
   llvm::Value* value = NULL;
   llvm::Value* valToRet = NULL;
   llvm::Value* lhs = left->Emit();
@@ -266,7 +266,7 @@ llvm::Value *PostfixExpr::Emit() {
   for (; it != Node::symtable->symTable.rend(); ++it) {
     map<string, SymbolTable::DeclAssoc> currMap = *it;
     if(currMap.find(s) != currMap.end()) {
-      cerr << "PostFix::finding value from symtable!!" << endl;
+      //cerr << "PostFix::finding value from symtable!!" << endl;
       value = currMap.find(s)->second.value;
       break;
     }
@@ -279,6 +279,7 @@ llvm::Value *PostfixExpr::Emit() {
       llvm::Value* pfSub = llvm::BinaryOperator::CreateSub(lhs, subOne, "", irgen->GetBasicBlock());
       //cerr << "Loading the value to return!" << endl;
       //valToRet = new llvm::LoadInst(value, "", irgen->GetBasicBlock());
+      //cerr << "DECREMENTING" << endl;
       new llvm::StoreInst(pfSub, value, irgen->GetBasicBlock());
     }
   }

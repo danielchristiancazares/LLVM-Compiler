@@ -97,9 +97,10 @@ llvm::Value *StmtBlock::Emit() {
   for(; it != Node::symtable->symTable.end(); it++) {
     map<string, SymbolTable::DeclAssoc> currMap = *it;
     for(map<string, SymbolTable::DeclAssoc>::iterator it2 = currMap.begin(); it2 != currMap.end(); it2++) {
-      cerr << "The string is " << it2->first << endl;
+      //cerr << "The string is " << it2->first << endl;
+      //cerr << "THe value of this string is " << it2->second.value << endl;
     }
-    cerr << "   NEW   MAP    " << endl;
+    //cerr << "   NEW   MAP    " << endl;
   }
   Node::symtable->symTable.pop_back();
 
@@ -120,9 +121,10 @@ llvm::Value *StmtBlock::EmitFromFunc() {
   for(; it != Node::symtable->symTable.end(); it++) {
     map<string, SymbolTable::DeclAssoc> currMap = *it;
     for(map<string, SymbolTable::DeclAssoc>::iterator it2 = currMap.begin(); it2 != currMap.end(); it2++) {
-      cerr << "The string is " << it2->first << endl;
+      //cerr << "The string is " << it2->first << endl;
+      //cerr << "THe value of this string is " << it2->second.value << endl;
     }
-    cerr << "   NEW   MAP    " << endl;
+    //cerr << "   NEW   MAP    " << endl;
   }
   Node::symtable->symTable.pop_back();
 
@@ -329,7 +331,7 @@ llvm::Value *ReturnStmt::Emit() {
   if (this->expr != NULL) {
     val = this->expr->Emit();
     //cerr << "expr is not null" << endl;
-    cerr << "return type is " << val << endl;
+    //cerr << "return type is " << val << endl;
     llvm::ReturnInst::Create(*context, val, irgen->GetBasicBlock());
   }
   else {
