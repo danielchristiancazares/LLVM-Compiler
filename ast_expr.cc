@@ -130,6 +130,50 @@ ArrayAccess::ArrayAccess(yyltype loc, Expr *b, Expr *s) : LValue(loc) {
 
 llvm::Value *ArithmeticExpr::Emit() {
   // TODO This is going to be such a pain in the butt
+  // unaryOp
+  if(this->left == NULL) {
+    llvm::Value* value = NULL;
+    llvm::Value* rhs = this->right->Emit();
+    llvm::Type* type = rhs->getType();
+    llvm::Value* binaryOp = NULL;
+    llvm::Value* intOne = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+    llvm::Value* floatOne = llvm::ConstantFP::get(irgen->GetFloatType(), 1.0);
+    llvm::Value* valToReturn = NULL;
+
+    string s = dynamic_cast<VarExpr*>(this->right)->GetIdentifier()->GetName();
+    vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = Node::symtable->symTable.rbegin();
+    for (; it != Node::symtable->symTable.rend(); ++it) {
+      map<string, SymbolTable::DeclAssoc> currMap = *it;
+      if(currMap.find(s) != currMap.end()) {
+        //cerr << "PostFix::finding value from symtable!!" << endl;
+        value = currMap.find(s)->second.value;
+        break;
+      }
+    }
+
+     if(type == irgen->GetIntType()) {
+        if(this->op->IsOp("--")) {
+          binaryOp = llvm::BinaryOperator::CreateSub(rhs, intOne, "", irgen->GetBasicBlock());
+        }
+        else {
+          binaryOp = llvm::BinaryOperator::CreateAdd(rhs, intOne, "", irgen->GetBasicBlock());
+        }
+      }
+      else if(type == irgen->GetFloatType()) {
+        if(this->op->IsOp("--")) {
+          binaryOp = llvm::BinaryOperator::CreateFSub(rhs, floatOne, "", irgen->GetBasicBlock());
+        }
+        else {
+          binaryOp = llvm::BinaryOperator::CreateFAdd(rhs, floatOne, "", irgen->GetBasicBlock());
+        }
+      }
+    new llvm::StoreInst(binaryOp, value, irgen->GetBasicBlock());
+    valToReturn = new llvm::LoadInst(value, "", irgen->GetBasicBlock());
+
+    return valToReturn;
+  }
+
+
 }
 
 void ArrayAccess::PrintChildren(int indentLevel) {
@@ -251,11 +295,13 @@ llvm::Value *AssignExpr::Emit() {
 }
 
 llvm::Value *PostfixExpr::Emit() {
-  VarExpr* lhsVar = dynamic_cast<VarExpr *>(left);
   //cerr << "calling varexpr load from postFix" << endl;
   llvm::Value* value = NULL;
   llvm::Value* lhs = left->Emit();
   llvm::Type* type = lhs->getType();
+  llvm::Value* binaryOp = NULL;
+  llvm::Value* intOne = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+  llvm::Value* floatOne = llvm::ConstantFP::get(irgen->GetFloatType(), 1.0);
 
   string s = dynamic_cast<VarExpr*>(left)->GetIdentifier()->GetName();
   vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = Node::symtable->symTable.rbegin();
@@ -268,13 +314,23 @@ llvm::Value *PostfixExpr::Emit() {
     }
   }
 
-  if(this->op->IsOp("--")) {
-    if(type == irgen->GetIntType()) {
-      llvm::Value* subOne = llvm::ConstantInt::get(irgen->GetIntType(), 1);
-      llvm::Value* pfSub = llvm::BinaryOperator::CreateSub(lhs, subOne, "", irgen->GetBasicBlock());
-      new llvm::StoreInst(pfSub, value, irgen->GetBasicBlock());
+  if(type == irgen->GetIntType()) {
+    if(this->op->IsOp("--")) {
+      binaryOp = llvm::BinaryOperator::CreateSub(lhs, intOne, "", irgen->GetBasicBlock());
+    }
+    else {
+      binaryOp = llvm::BinaryOperator::CreateAdd(lhs, intOne, "", irgen->GetBasicBlock());
     }
   }
+  else if(type == irgen->GetFloatType()) {
+    if(this->op->IsOp("--")) {
+      binaryOp = llvm::BinaryOperator::CreateFSub(lhs, floatOne, "", irgen->GetBasicBlock());
+    }
+    else {
+      binaryOp = llvm::BinaryOperator::CreateFAdd(lhs, floatOne, "", irgen->GetBasicBlock());
+    }
+  }
+  new llvm::StoreInst(binaryOp, value, irgen->GetBasicBlock());
   return lhs;
 }
 
