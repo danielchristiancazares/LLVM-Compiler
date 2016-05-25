@@ -58,15 +58,14 @@ llvm::Value *VarExpr::Emit() {
   for (; it != Node::symtable->symTable.rend(); ++it) {
     map<string, SymbolTable::DeclAssoc> currMap = *it;
     if(currMap.find(s) != currMap.end()) {
-      //cerr << "Load called from varepr!!" << endl;
+      cerr << "Load called from varepr!!" << endl;
       value = currMap.find(s)->second.value;
-      //cerr << "the value in varexpr is " << value << endl;
+      cerr << "the value in varexpr is " << value << endl;
       llvm::Twine *twine = new llvm::Twine(this->GetIdentifier()->GetName());
-      cerr << "Varexpr Load" << endl;
+      cerr << "Loading identifier " << this->GetIdentifier()->GetName() << endl;
       return new llvm::LoadInst(value, *twine, irgen->GetBasicBlock());
     }
   }
-  //cerr << "SHIT WAS NOT FOUND" << endl;
   return NULL;
 }
 
@@ -256,11 +255,10 @@ llvm::Value *PostfixExpr::Emit() {
   VarExpr* lhsVar = dynamic_cast<VarExpr *>(left);
   cerr << "calling varexpr load from postFix" << endl;
   llvm::Value* value = NULL;
-  llvm::Value* valToRet = NULL;
   llvm::Value* lhs = left->Emit();
   llvm::Type* type = lhs->getType();
 
-  valToRet = new llvm::LoadInst(value, "", irgen->GetBasicBlock());
+  llvm::Value* valToRet = new llvm::LoadInst(value, "", irgen->GetBasicBlock());
   string s = dynamic_cast<VarExpr*>(left)->GetIdentifier()->GetName();
   vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = Node::symtable->symTable.rbegin();
   for (; it != Node::symtable->symTable.rend(); ++it) {
