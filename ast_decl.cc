@@ -87,7 +87,7 @@ llvm::Value *VarDecl::Emit() {
     //cerr << "This is what the declass global is" << currentScope.rbegin()->second.isGlobal << endl;
     if(currDeclAssoc.isGlobal == true) {
       //cerr << "global variable declared" << endl;
-      value = new llvm::GlobalVariable(*mod, type, isConstant, llvm::GlobalValue::ExternalLinkage, constant, name);
+      value = new llvm::GlobalVariable(*mod, type, false, llvm::GlobalValue::ExternalLinkage, constant, name);
       declassoc.isGlobal = true;
     }
     else {
@@ -97,7 +97,7 @@ llvm::Value *VarDecl::Emit() {
     }
     declassoc.value = value;
     declassoc.decl = this;
-    currentScope.insert(map<string, SymbolTable::DeclAssoc>(name, declassoc));
+    currentScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
     Node::symtable->symTable.push_back(currentScope);
   }
 
