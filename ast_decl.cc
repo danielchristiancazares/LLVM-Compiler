@@ -42,7 +42,7 @@ void VarDecl::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *VarDecl::Emit() {
-  //cerr << "VarDecl is called" << endl;
+  cerr << "VarDecl is called" << endl;
   llvm::Value *value = NULL;
   char *name;
   bool isConstant;
@@ -97,7 +97,7 @@ llvm::Value *VarDecl::Emit() {
     }
     declassoc.value = value;
     declassoc.decl = this;
-    currentScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
+    currentScope.insert(map<string, SymbolTable::DeclAssoc>(name, declassoc));
     Node::symtable->symTable.push_back(currentScope);
   }
 
@@ -173,7 +173,7 @@ llvm::Value *FnDecl::Emit() {
     it->setName(argName);
     it++;
   }
-  
+
   // insert a block into the function
   // create a basicBlock
   llvm::LLVMContext *context = irgen->GetContext();
@@ -199,7 +199,7 @@ llvm::Value *FnDecl::Emit() {
     Node::symtable->symTable.push_back(currentScope);
   }
 
-  
+
   // creating a new scope for the formals
   map<string, SymbolTable::DeclAssoc> newScope;
   llvm::Function::arg_iterator arg = f->arg_begin();
