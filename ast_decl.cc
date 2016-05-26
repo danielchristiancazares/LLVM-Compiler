@@ -42,7 +42,7 @@ void VarDecl::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *VarDecl::Emit() {
-  cerr << "VarDecl is called" << endl;
+  cerr << "[DEBUG] VarDecl::Emit()" << endl;
   llvm::Value *value = NULL;
   char *name;
   bool isConstant;
@@ -54,9 +54,11 @@ llvm::Value *VarDecl::Emit() {
 
   // sets the constant
   if(this->assignTo != NULL) {
+    cerr << "[DEBUG] llvm:cast<llvm::Constant>" << endl; 
     constant = llvm::cast<llvm::Constant>(this->assignTo->Emit());
   }
   else {
+    cerr << "[DEBUG] llvm::Constant::getNullValue(type)" << endl;
     constant = llvm::Constant::getNullValue(type);
   }
 
