@@ -75,10 +75,7 @@ void StmtBlock::PrintChildren(int indentLevel) {
 
 llvm::Value *StmtBlock::Emit() {
   // TODO Need to figure out the logic for this.
-<<<<<<< HEAD
-=======
-  cerr << "StmtBlock Emit called" << endl;
->>>>>>> parent of bf3ab51... re-adding testfiles
+  //cerr << "StmtBlock Emit called" << endl;
   /*
     Get the current scope
     For each  element in scope
@@ -101,10 +98,10 @@ llvm::Value *StmtBlock::Emit() {
   for(; it != Node::symtable->symTable.end(); it++) {
     map<string, SymbolTable::DeclAssoc> currMap = *it;
     for(map<string, SymbolTable::DeclAssoc>::iterator it2 = currMap.begin(); it2 != currMap.end(); it2++) {
-      //cerr << "The string is " << it2->first << endl;
-      //cerr << "THe value of this string is " << it2->second.value << endl;
+      ////cerr << "The string is " << it2->first << endl;
+      ////cerr << "THe value of this string is " << it2->second.value << endl;
     }
-    //cerr << "   NEW   MAP    " << endl;
+    ////cerr << "   NEW   MAP    " << endl;
   }
   Node::symtable->symTable.pop_back();
 
@@ -114,27 +111,22 @@ llvm::Value *StmtBlock::Emit() {
 llvm::Value *StmtBlock::EmitFromFunc() {
   
   // get formals for local variables
-<<<<<<< HEAD
   //cerr << "StmtBlock:: EmitFromFunc" << endl;
-  
-  //cerr << "number of statements is " << this->stmts->NumElements() << endl;
-=======
-  cerr << "StmtBlock:: EmitFromFunc" << endl;
-  cerr << "Vector size is " << Node::symtable->symTable.size() << endl;
-  cerr << "Number of statements is " << this->stmts->NumElements() << endl;
->>>>>>> parent of bf3ab51... re-adding testfiles
+  //cerr << "Vector size is " << Node::symtable->symTable.size() << endl;
+  //cerr << "Number of statements is " << this->stmts->NumElements() << endl;
   for (int i = 0; i < this->stmts->NumElements(); i++) {
     Stmt *s = this->stmts->Nth(i);
     s->Emit();
   }
+
   vector< map<string, SymbolTable::DeclAssoc> >::iterator it = Node::symtable->symTable.begin();
   for(; it != Node::symtable->symTable.end(); it++) {
     map<string, SymbolTable::DeclAssoc> currMap = *it;
     for(map<string, SymbolTable::DeclAssoc>::iterator it2 = currMap.begin(); it2 != currMap.end(); it2++) {
-      //cerr << "The string is " << it2->first << endl;
-      //cerr << "THe value of this string is " << it2->second.value << endl;
+      ////cerr << "The string is " << it2->first << endl;
+      ////cerr << "THe value of this string is " << it2->second.value << endl;
     }
-    //cerr << "   NEW   MAP    " << endl;
+    ////cerr << "   NEW   MAP    " << endl;
   }
   Node::symtable->symTable.pop_back();
 
@@ -151,10 +143,7 @@ void DeclStmt::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *DeclStmt::Emit() {
-<<<<<<< HEAD
-=======
-  cerr << "DeclStmt Emit called" << endl;
->>>>>>> parent of bf3ab51... re-adding testfiles
+  //cerr << "DeclStmt Emit called" << endl;
   decl->Emit();
   return NULL;
 }
@@ -190,85 +179,64 @@ void ForStmt::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *ForStmt::Emit() {
-<<<<<<< HEAD
-=======
-  cerr << "ForStmt Emit called" << endl;
->>>>>>> parent of bf3ab51... re-adding testfiles
+  //cerr << "ForStmt Emit called" << endl;
   llvm::LLVMContext *context = irgen->GetContext();
   // creating the basicblocks
-  llvm::BasicBlock *footerBB = llvm::BasicBlock::Create(*context, "footerBB", irgen->GetFunction());
-  llvm::BasicBlock *stepBB = llvm::BasicBlock::Create(*context, "stepBB", irgen->GetFunction());
-  llvm::BasicBlock *bodyBB = llvm::BasicBlock::Create(*context, "bodyBB", irgen->GetFunction());
-  llvm::BasicBlock *headerBB = llvm::BasicBlock::Create(*context, "headerBB", irgen->GetFunction());
-<<<<<<< HEAD
-=======
   llvm::BasicBlock *next = llvm::BasicBlock::Create(*context, "next", irgen->GetFunction());
->>>>>>> parent of bf3ab51... re-adding testfiles
-
-  // emit init
-  llvm::Value *initialization = this->init->Emit();
-
-
+  llvm::BasicBlock *headerBB = llvm::BasicBlock::Create(*context, "headerBB", irgen->GetFunction());
+  llvm::BasicBlock *bodyBB = llvm::BasicBlock::Create(*context, "bodyBB", irgen->GetFunction());
+  llvm::BasicBlock *stepBB = llvm::BasicBlock::Create(*context, "stepBB", irgen->GetFunction());
+  llvm::BasicBlock *footerBB = llvm::BasicBlock::Create(*context, "footerBB", irgen->GetFunction());
+  
   llvm::BranchInst::Create(next, irgen->GetBasicBlock());
   irgen->SetBasicBlock(next);
-
-
+  // emit init
+  this->init->Emit();
 
   // create branch to terminate current BB and start loop header
-<<<<<<< HEAD
-=======
-  cerr << "branch for header" << endl;
->>>>>>> parent of bf3ab51... re-adding testfiles
+  //cerr << "branch for header" << endl;
   llvm::BranchInst::Create(headerBB, irgen->GetBasicBlock());
   irgen->SetBasicBlock(headerBB);
-
   // emit test
   llvm::Value *cond = this->test->Emit();
 
   // irgen headerBB
-<<<<<<< HEAD
-  llvm::BranchInst::Create(bodyBB, footerBB, cond, irgen->GetBasicBlock());
-
-  // jump to footer
-=======
-  cerr << "branch for main" << endl;
+  //cerr << "branch for main" << endl;
 
   llvm::BranchInst::Create(bodyBB, footerBB, cond, irgen->GetBasicBlock());
 
   // jump to footer
-  cerr << "branch for footer" << endl;
+  //cerr << "branch for footer" << endl;
 
   /*
->>>>>>> parent of bf3ab51... re-adding testfiles
   llvm::BranchInst::Create(footerBB, irgen->GetBasicBlock());
   irgen->SetBasicBlock(footerBB);
+  */
 
   // saving footerBB for break statement
   Node::breakStack->push_back(footerBB);
 
   // saving headerBB for continue statement
-  Node::continueStack->push_back(headerBB);
+  Node::continueStack->push_back(stepBB);
 
   // emit body
-  llvm::Value *body = this->body->Emit();
+  //llvm::BranchInst::Create(bodyBB, irgen->GetBasicBlock());
   irgen->SetBasicBlock(bodyBB);
+  llvm::Value *body = this->body->Emit();
+  //irgen->SetBasicBlock(bodyBB);
   // check terminator instruction
   if(bodyBB->getTerminator() == NULL) {
-<<<<<<< HEAD
-=======
-    cerr << "branch for step" << endl;
->>>>>>> parent of bf3ab51... re-adding testfiles
+    //cerr << "branch for step" << endl;
     llvm::BranchInst::Create(stepBB, irgen->GetBasicBlock());
   }
 
+  irgen->SetBasicBlock(stepBB);
   llvm::Value *step = this->step->Emit();
-<<<<<<< HEAD
-=======
-  cerr << "branch back to header" << endl;
->>>>>>> parent of bf3ab51... re-adding testfiles
+  //cerr << "branch back to header" << endl;
   llvm::BranchInst::Create(headerBB, irgen->GetBasicBlock());
 
   // pop break stack
+  irgen->SetBasicBlock(footerBB);
   Node::breakStack->pop_back();
 
   // pop continue stack
@@ -376,21 +344,17 @@ void ReturnStmt::PrintChildren(int indentLevel) {
 
 llvm::Value *ReturnStmt::Emit() {
   // TODO Check the expression and perform something depending on that?
-<<<<<<< HEAD
-  //cerr << "returnEmit called" << endl;
-=======
-  cerr << "ReturnEmit called" << endl;
->>>>>>> parent of bf3ab51... re-adding testfiles
+  //cerr << "ReturnEmit called" << endl;
   llvm::LLVMContext *context = irgen->GetContext();
   llvm::Value *val;
   if (this->expr != NULL) {
     val = this->expr->Emit();
-    //cerr << "expr is not null" << endl;
-    //cerr << "return type is " << val << endl;
+    ////cerr << "expr is not null" << endl;
+    ////cerr << "return type is " << val << endl;
     llvm::ReturnInst::Create(*context, val, irgen->GetBasicBlock());
   }
   else {
-    //cerr << "expr is null" << endl;
+    ////cerr << "expr is null" << endl;
     llvm::ReturnInst::Create(*context, irgen->GetBasicBlock());
   }
   return NULL;
@@ -433,7 +397,6 @@ void SwitchStmt::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *SwitchStmt::Emit() {
-  vector<Stmt*> caseStack = new vector<Stmt*>();
   //TODO OMG What do here
   /*
     Find  all the cases /default  case  and create  BB  for each  of  them
@@ -444,7 +407,6 @@ llvm::Value *SwitchStmt::Emit() {
     Emit  for statement in  case  statement
     Create  terminator  instrucCon
   */
-    
   for(int i = 0; i < this->cases->NumElements(); i++) {
 
   }
