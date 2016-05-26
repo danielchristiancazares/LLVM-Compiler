@@ -397,6 +397,7 @@ void SwitchStmt::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *SwitchStmt::Emit() {
+  vector<Stmt*> caseStack = new vector<Stmt*>();
   //TODO OMG What do here
   /*
     Find  all the cases /default  case  and create  BB  for each  of  them
@@ -407,6 +408,7 @@ llvm::Value *SwitchStmt::Emit() {
     Emit  for statement in  case  statement
     Create  terminator  instrucCon
   */
+    
   for(int i = 0; i < this->cases->NumElements(); i++) {
 
   }
