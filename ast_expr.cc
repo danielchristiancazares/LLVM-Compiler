@@ -211,7 +211,7 @@ llvm::Value *LogicalExpr::Emit() {
 }
 
 llvm::Value *AssignExpr::Emit() {
-  //cerr << "Calling assign" << endl;
+  cerr << "[DEBUG] AssignExpr::Emit()" << endl;
   VarExpr *lhsVar = dynamic_cast<VarExpr *>(left);
   llvm::Value *rhs = right->Emit();
 

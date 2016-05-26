@@ -133,7 +133,7 @@ void FnDecl::PrintChildren(int indentLevel) {
 
 llvm::Value *FnDecl::Emit() {
   // TODO
-  //cerr << "FnDecl is called" << endl;
+  cerr << "[DEBUG] FnDecl::Emit()" << endl;
   // storing the return type
   llvm::Type *returnType = irgen->Converter(this->returnType);
 

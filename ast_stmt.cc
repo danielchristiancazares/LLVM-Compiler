@@ -110,7 +110,7 @@ llvm::Value *StmtBlock::Emit() {
 llvm::Value *StmtBlock::EmitFromFunc() {
   
   // get formals for local variables
-  //cerr << "StmtBlock:: EmitFromFunc" << endl;
+  cerr << "[DEBUG] StmtBlock::EmitFromFunc()" << endl;
   
   //cerr << "number of statements is " << this->stmts->NumElements() << endl;
   for (int i = 0; i < this->stmts->NumElements(); i++) {
