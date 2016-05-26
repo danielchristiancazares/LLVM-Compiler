@@ -65,6 +65,7 @@ llvm::Value *VarDecl::Emit() {
   llvm::Module *mod = irgen->GetOrCreateModule("irgen.bc");
 
   if(Node::symtable->symTable.empty()) {
+    cerr << "TABLE IS EMPTY!!!" << endl;
     map <string, SymbolTable::DeclAssoc> newMap;
     value = new llvm::GlobalVariable(*mod, type, false, llvm::GlobalValue::ExternalLinkage, constant, name);
     declassoc.value = value;
@@ -77,27 +78,31 @@ llvm::Value *VarDecl::Emit() {
     Node::symtable->symTable.push_back(newMap);
   }
   else {
+    cerr << "TABLE IS NOT EMPTY!!!" << endl;
     map <string, SymbolTable::DeclAssoc> currentScope = Node::symtable->symTable.back();
-    Node::symtable->symTable.pop_back();
+    //cerr << "segfault at currentVar" << endl;
     string currentVar = this->GetIdentifier()->GetName();
-
+    //cerr << "JK not at currentVar" << endl;
+    /*
     // checks if this is a global scope
+    cerr << "Segfault at currDeclAssoc" << endl;
     SymbolTable::DeclAssoc currDeclAssoc = currentScope.rbegin()->second;
-    //cerr << "TABLE IS NOT EMPTY!!!" << endl;
-    //cerr << "This is what the declass global is" << currentScope.rbegin()->second.isGlobal << endl;
-    if(currDeclAssoc.isGlobal == true) {
-      //cerr << "global variable declared" << endl;
+    cerr << "JK not at currDeclAssoc" << endl;
+    */
+    if(Node::symtable->symTable.size() <= 1) {
+      cerr << "Global variable declared on non-empty table" << endl;
       value = new llvm::GlobalVariable(*mod, type, false, llvm::GlobalValue::ExternalLinkage, constant, name);
       declassoc.isGlobal = true;
     }
     else {
-      //cerr << "local var declared" << endl;
+      cerr << "Local variable declared on non-empty table" << endl;
       value = new llvm::AllocaInst(type, name, irgen->GetBasicBlock());
       new llvm::StoreInst(constant, value, irgen->GetBasicBlock());
     }
     declassoc.value = value;
     declassoc.decl = this;
     currentScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
+    Node::symtable->symTable.pop_back();
     Node::symtable->symTable.push_back(currentScope);
   }
 
@@ -174,13 +179,15 @@ llvm::Value *FnDecl::Emit() {
     it++;
   }
 
+  irgen->SetFunction(f);
   // insert a block into the function
   // create a basicBlock
   llvm::LLVMContext *context = irgen->GetContext();
   llvm::BasicBlock *bb = llvm::BasicBlock::Create(*context, "entry", f, irgen->GetBasicBlock());
   irgen->SetBasicBlock(bb);
+
   if (Node::symtable->symTable.empty()) {
-    //cerr << "FnDecl, EMPTY TABLE" << endl;
+    cerr << "FnDecl, EMPTY TABLE" << endl;
     string name = this->GetIdentifier()->GetName();
     map <string, SymbolTable::DeclAssoc> newScope;
     declassoc.decl = this;
@@ -190,12 +197,12 @@ llvm::Value *FnDecl::Emit() {
   }
   else {
     // inserting the function name to the current scope
-    //cerr << "FnDecl, NOT EMPTY TABLE" << endl;
+    cerr << "FnDecl, NOT EMPTY TABLE" << endl;
     map <string, SymbolTable::DeclAssoc> currentScope = Node::symtable->symTable.back();
-    Node::symtable->symTable.pop_back();
     declassoc.decl = this;
     declassoc.value = f;
     currentScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
+    Node::symtable->symTable.pop_back();
     Node::symtable->symTable.push_back(currentScope);
   }
 
@@ -217,11 +224,14 @@ llvm::Value *FnDecl::Emit() {
   }
   // pushing new scope
   Node::symtable->symTable.push_back(newScope);
-
   StmtBlock *stmtblock = dynamic_cast<StmtBlock *>(this->body);
   stmtblock->EmitFromFunc();
 
   return f;
+
+  if(irgen->GetBasicBlock()->getTerminator() == NULL) {
+    new llvm::UnreachableInst(*context,irgen->GetBasicBlock());
+  }
 
 // create a return instruction
 //    llvm::Value *val = llvm::ConstantInt::get(intTy, 1);
