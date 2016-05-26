@@ -4,4 +4,14 @@ Result: 1.000000e+00
 segfault if_test!
 segfault if_test!
 segfault if_test!
+>>>>>>> 80f87f7b667eeefd38106ea599900d50881f5634
+<<<<<<< HEAD
+=======
+segfault if_test!
+segfault if_test!
+<<<<<<< HEAD
+segfault if_test!
 >>>>>>> parent of db88d96... fixed fndecl sets curr function now
+=======
+>>>>>>> parent of bf3ab51... re-adding testfiles
+>>>>>>> 80f87f7b667eeefd38106ea599900d50881f5634

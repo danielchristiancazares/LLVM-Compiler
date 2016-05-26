@@ -4,4 +4,14 @@ Result: 1
 segfault multi_ret!
 segfault multi_ret!
 segfault multi_ret!
+>>>>>>> 80f87f7b667eeefd38106ea599900d50881f5634
+<<<<<<< HEAD
+=======
+segfault multi_ret!
+segfault multi_ret!
+segfault multi_ret!
+<<<<<<< HEAD
 >>>>>>> parent of db88d96... fixed fndecl sets curr function now
+=======
+>>>>>>> parent of bf3ab51... re-adding testfiles
+>>>>>>> 80f87f7b667eeefd38106ea599900d50881f5634

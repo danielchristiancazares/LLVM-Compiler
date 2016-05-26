@@ -4,4 +4,14 @@ Result: 2.000000e+00
 segfault switch_basic!
 segfault switch_basic!
 segfault switch_basic!
+>>>>>>> 80f87f7b667eeefd38106ea599900d50881f5634
+<<<<<<< HEAD
+=======
+segfault switch_basic!
+segfault switch_basic!
+<<<<<<< HEAD
+segfault switch_basic!
 >>>>>>> parent of db88d96... fixed fndecl sets curr function now
+=======
+>>>>>>> parent of bf3ab51... re-adding testfiles
+>>>>>>> 80f87f7b667eeefd38106ea599900d50881f5634
