@@ -1,1 +1,7 @@
 Result: 7.500000e-01
+<<<<<<< HEAD
+=======
+segfault vect_assign!
+segfault vect_assign!
+segfault vect_assign!
+>>>>>>> parent of db88d96... fixed fndecl sets curr function now
