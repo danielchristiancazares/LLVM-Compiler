@@ -6,3 +6,4 @@ float vectassign()
    t = v;
    return t.x * t.y;
 }
+
