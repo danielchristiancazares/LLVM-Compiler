@@ -75,7 +75,7 @@ void StmtBlock::PrintChildren(int indentLevel) {
 
 llvm::Value *StmtBlock::Emit() {
   // TODO Need to figure out the logic for this.
-  //cerr << "StmtBlock Emit called" << endl;
+  cerr << "StmtBlock Emit called" << endl;
   /*
     Get the current scope
     For each  element in scope
@@ -98,10 +98,10 @@ llvm::Value *StmtBlock::Emit() {
   for(; it != Node::symtable->symTable.end(); it++) {
     map<string, SymbolTable::DeclAssoc> currMap = *it;
     for(map<string, SymbolTable::DeclAssoc>::iterator it2 = currMap.begin(); it2 != currMap.end(); it2++) {
-      ////cerr << "The string is " << it2->first << endl;
-      ////cerr << "THe value of this string is " << it2->second.value << endl;
+      //cerr << "The string is " << it2->first << endl;
+      //cerr << "THe value of this string is " << it2->second.value << endl;
     }
-    ////cerr << "   NEW   MAP    " << endl;
+    //cerr << "   NEW   MAP    " << endl;
   }
   Node::symtable->symTable.pop_back();
 
@@ -111,9 +111,9 @@ llvm::Value *StmtBlock::Emit() {
 llvm::Value *StmtBlock::EmitFromFunc() {
   
   // get formals for local variables
-  //cerr << "StmtBlock:: EmitFromFunc" << endl;
-  //cerr << "Vector size is " << Node::symtable->symTable.size() << endl;
-  //cerr << "Number of statements is " << this->stmts->NumElements() << endl;
+  cerr << "StmtBlock:: EmitFromFunc" << endl;
+  cerr << "Vector size is " << Node::symtable->symTable.size() << endl;
+  cerr << "Number of statements is " << this->stmts->NumElements() << endl;
   for (int i = 0; i < this->stmts->NumElements(); i++) {
     Stmt *s = this->stmts->Nth(i);
     s->Emit();
@@ -123,10 +123,10 @@ llvm::Value *StmtBlock::EmitFromFunc() {
   for(; it != Node::symtable->symTable.end(); it++) {
     map<string, SymbolTable::DeclAssoc> currMap = *it;
     for(map<string, SymbolTable::DeclAssoc>::iterator it2 = currMap.begin(); it2 != currMap.end(); it2++) {
-      ////cerr << "The string is " << it2->first << endl;
-      ////cerr << "THe value of this string is " << it2->second.value << endl;
+      //cerr << "The string is " << it2->first << endl;
+      //cerr << "THe value of this string is " << it2->second.value << endl;
     }
-    ////cerr << "   NEW   MAP    " << endl;
+    //cerr << "   NEW   MAP    " << endl;
   }
   Node::symtable->symTable.pop_back();
 
@@ -143,7 +143,7 @@ void DeclStmt::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *DeclStmt::Emit() {
-  //cerr << "DeclStmt Emit called" << endl;
+  cerr << "DeclStmt Emit called" << endl;
   decl->Emit();
   return NULL;
 }
@@ -179,34 +179,38 @@ void ForStmt::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *ForStmt::Emit() {
-  //cerr << "ForStmt Emit called" << endl;
+  cerr << "ForStmt Emit called" << endl;
   llvm::LLVMContext *context = irgen->GetContext();
   // creating the basicblocks
-  llvm::BasicBlock *next = llvm::BasicBlock::Create(*context, "next", irgen->GetFunction());
-  llvm::BasicBlock *headerBB = llvm::BasicBlock::Create(*context, "headerBB", irgen->GetFunction());
-  llvm::BasicBlock *bodyBB = llvm::BasicBlock::Create(*context, "bodyBB", irgen->GetFunction());
-  llvm::BasicBlock *stepBB = llvm::BasicBlock::Create(*context, "stepBB", irgen->GetFunction());
   llvm::BasicBlock *footerBB = llvm::BasicBlock::Create(*context, "footerBB", irgen->GetFunction());
-  
-  llvm::BranchInst::Create(next, irgen->GetBasicBlock());
-  irgen->SetBasicBlock(next);
+  llvm::BasicBlock *stepBB = llvm::BasicBlock::Create(*context, "stepBB", irgen->GetFunction());
+  llvm::BasicBlock *bodyBB = llvm::BasicBlock::Create(*context, "bodyBB", irgen->GetFunction());
+  llvm::BasicBlock *headerBB = llvm::BasicBlock::Create(*context, "headerBB", irgen->GetFunction());
+  llvm::BasicBlock *next = llvm::BasicBlock::Create(*context, "next", irgen->GetFunction());
+
   // emit init
   this->init->Emit();
 
+
+  llvm::BranchInst::Create(next, irgen->GetBasicBlock());
+  irgen->SetBasicBlock(next);
+
+
+
   // create branch to terminate current BB and start loop header
-  //cerr << "branch for header" << endl;
+  cerr << "branch for header" << endl;
   llvm::BranchInst::Create(headerBB, irgen->GetBasicBlock());
   irgen->SetBasicBlock(headerBB);
   // emit test
   llvm::Value *cond = this->test->Emit();
 
   // irgen headerBB
-  //cerr << "branch for main" << endl;
+  cerr << "branch for main" << endl;
 
   llvm::BranchInst::Create(bodyBB, footerBB, cond, irgen->GetBasicBlock());
 
   // jump to footer
-  //cerr << "branch for footer" << endl;
+  cerr << "branch for footer" << endl;
 
   /*
   llvm::BranchInst::Create(footerBB, irgen->GetBasicBlock());
@@ -226,13 +230,13 @@ llvm::Value *ForStmt::Emit() {
   //irgen->SetBasicBlock(bodyBB);
   // check terminator instruction
   if(bodyBB->getTerminator() == NULL) {
-    //cerr << "branch for step" << endl;
+    cerr << "branch for step" << endl;
     llvm::BranchInst::Create(stepBB, irgen->GetBasicBlock());
   }
 
   irgen->SetBasicBlock(stepBB);
   llvm::Value *step = this->step->Emit();
-  //cerr << "branch back to header" << endl;
+  cerr << "branch back to header" << endl;
   llvm::BranchInst::Create(headerBB, irgen->GetBasicBlock());
 
   // pop break stack
@@ -344,17 +348,17 @@ void ReturnStmt::PrintChildren(int indentLevel) {
 
 llvm::Value *ReturnStmt::Emit() {
   // TODO Check the expression and perform something depending on that?
-  //cerr << "ReturnEmit called" << endl;
+  cerr << "ReturnEmit called" << endl;
   llvm::LLVMContext *context = irgen->GetContext();
   llvm::Value *val;
   if (this->expr != NULL) {
     val = this->expr->Emit();
-    ////cerr << "expr is not null" << endl;
-    ////cerr << "return type is " << val << endl;
+    //cerr << "expr is not null" << endl;
+    //cerr << "return type is " << val << endl;
     llvm::ReturnInst::Create(*context, val, irgen->GetBasicBlock());
   }
   else {
-    ////cerr << "expr is null" << endl;
+    //cerr << "expr is null" << endl;
     llvm::ReturnInst::Create(*context, irgen->GetBasicBlock());
   }
   return NULL;
