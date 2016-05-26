@@ -75,6 +75,10 @@ void StmtBlock::PrintChildren(int indentLevel) {
 
 llvm::Value *StmtBlock::Emit() {
   // TODO Need to figure out the logic for this.
+<<<<<<< HEAD
+=======
+  cerr << "StmtBlock Emit called" << endl;
+>>>>>>> parent of bf3ab51... re-adding testfiles
   /*
     Get the current scope
     For each  element in scope
@@ -110,9 +114,15 @@ llvm::Value *StmtBlock::Emit() {
 llvm::Value *StmtBlock::EmitFromFunc() {
   
   // get formals for local variables
+<<<<<<< HEAD
   //cerr << "StmtBlock:: EmitFromFunc" << endl;
   
   //cerr << "number of statements is " << this->stmts->NumElements() << endl;
+=======
+  cerr << "StmtBlock:: EmitFromFunc" << endl;
+  cerr << "Vector size is " << Node::symtable->symTable.size() << endl;
+  cerr << "Number of statements is " << this->stmts->NumElements() << endl;
+>>>>>>> parent of bf3ab51... re-adding testfiles
   for (int i = 0; i < this->stmts->NumElements(); i++) {
     Stmt *s = this->stmts->Nth(i);
     s->Emit();
@@ -141,6 +151,10 @@ void DeclStmt::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *DeclStmt::Emit() {
+<<<<<<< HEAD
+=======
+  cerr << "DeclStmt Emit called" << endl;
+>>>>>>> parent of bf3ab51... re-adding testfiles
   decl->Emit();
   return NULL;
 }
@@ -176,17 +190,35 @@ void ForStmt::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *ForStmt::Emit() {
+<<<<<<< HEAD
+=======
+  cerr << "ForStmt Emit called" << endl;
+>>>>>>> parent of bf3ab51... re-adding testfiles
   llvm::LLVMContext *context = irgen->GetContext();
   // creating the basicblocks
   llvm::BasicBlock *footerBB = llvm::BasicBlock::Create(*context, "footerBB", irgen->GetFunction());
   llvm::BasicBlock *stepBB = llvm::BasicBlock::Create(*context, "stepBB", irgen->GetFunction());
   llvm::BasicBlock *bodyBB = llvm::BasicBlock::Create(*context, "bodyBB", irgen->GetFunction());
   llvm::BasicBlock *headerBB = llvm::BasicBlock::Create(*context, "headerBB", irgen->GetFunction());
+<<<<<<< HEAD
+=======
+  llvm::BasicBlock *next = llvm::BasicBlock::Create(*context, "next", irgen->GetFunction());
+>>>>>>> parent of bf3ab51... re-adding testfiles
 
   // emit init
   llvm::Value *initialization = this->init->Emit();
 
+
+  llvm::BranchInst::Create(next, irgen->GetBasicBlock());
+  irgen->SetBasicBlock(next);
+
+
+
   // create branch to terminate current BB and start loop header
+<<<<<<< HEAD
+=======
+  cerr << "branch for header" << endl;
+>>>>>>> parent of bf3ab51... re-adding testfiles
   llvm::BranchInst::Create(headerBB, irgen->GetBasicBlock());
   irgen->SetBasicBlock(headerBB);
 
@@ -194,9 +226,20 @@ llvm::Value *ForStmt::Emit() {
   llvm::Value *cond = this->test->Emit();
 
   // irgen headerBB
+<<<<<<< HEAD
   llvm::BranchInst::Create(bodyBB, footerBB, cond, irgen->GetBasicBlock());
 
   // jump to footer
+=======
+  cerr << "branch for main" << endl;
+
+  llvm::BranchInst::Create(bodyBB, footerBB, cond, irgen->GetBasicBlock());
+
+  // jump to footer
+  cerr << "branch for footer" << endl;
+
+  /*
+>>>>>>> parent of bf3ab51... re-adding testfiles
   llvm::BranchInst::Create(footerBB, irgen->GetBasicBlock());
   irgen->SetBasicBlock(footerBB);
 
@@ -211,10 +254,18 @@ llvm::Value *ForStmt::Emit() {
   irgen->SetBasicBlock(bodyBB);
   // check terminator instruction
   if(bodyBB->getTerminator() == NULL) {
+<<<<<<< HEAD
+=======
+    cerr << "branch for step" << endl;
+>>>>>>> parent of bf3ab51... re-adding testfiles
     llvm::BranchInst::Create(stepBB, irgen->GetBasicBlock());
   }
 
   llvm::Value *step = this->step->Emit();
+<<<<<<< HEAD
+=======
+  cerr << "branch back to header" << endl;
+>>>>>>> parent of bf3ab51... re-adding testfiles
   llvm::BranchInst::Create(headerBB, irgen->GetBasicBlock());
 
   // pop break stack
@@ -325,7 +376,11 @@ void ReturnStmt::PrintChildren(int indentLevel) {
 
 llvm::Value *ReturnStmt::Emit() {
   // TODO Check the expression and perform something depending on that?
+<<<<<<< HEAD
   //cerr << "returnEmit called" << endl;
+=======
+  cerr << "ReturnEmit called" << endl;
+>>>>>>> parent of bf3ab51... re-adding testfiles
   llvm::LLVMContext *context = irgen->GetContext();
   llvm::Value *val;
   if (this->expr != NULL) {

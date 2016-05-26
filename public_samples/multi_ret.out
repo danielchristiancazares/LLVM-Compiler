@@ -2,3 +2,9 @@ Result: 1
 segfault multi_ret!
 segfault multi_ret!
 segfault multi_ret!
+<<<<<<< HEAD
+=======
+segfault multi_ret!
+segfault multi_ret!
+segfault multi_ret!
+>>>>>>> parent of bf3ab51... re-adding testfiles

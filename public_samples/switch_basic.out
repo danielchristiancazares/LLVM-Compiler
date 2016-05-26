@@ -2,3 +2,8 @@ Result: 2.000000e+00
 segfault switch_basic!
 segfault switch_basic!
 segfault switch_basic!
+<<<<<<< HEAD
+=======
+segfault switch_basic!
+segfault switch_basic!
+>>>>>>> parent of bf3ab51... re-adding testfiles

@@ -2,3 +2,8 @@ Result: 5050
 segfault while_loop!
 segfault while_loop!
 segfault while_loop!
+<<<<<<< HEAD
+=======
+segfault while_loop!
+segfault while_loop!
+>>>>>>> parent of bf3ab51... re-adding testfiles
