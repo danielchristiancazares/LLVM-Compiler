@@ -75,10 +75,7 @@ void StmtBlock::PrintChildren(int indentLevel) {
 
 llvm::Value *StmtBlock::Emit() {
   // TODO Need to figure out the logic for this.
-<<<<<<< HEAD
   //cerr << "StmtBlock Emit called" << endl;
-=======
->>>>>>> parent of db88d96... fixed fndecl sets curr function now
   /*
     Get the current scope
     For each  element in scope
@@ -115,17 +112,13 @@ llvm::Value *StmtBlock::EmitFromFunc() {
   
   // get formals for local variables
   //cerr << "StmtBlock:: EmitFromFunc" << endl;
-<<<<<<< HEAD
   //cerr << "Vector size is " << Node::symtable->symTable.size() << endl;
   //cerr << "Number of statements is " << this->stmts->NumElements() << endl;
-=======
-  
-  //cerr << "number of statements is " << this->stmts->NumElements() << endl;
->>>>>>> parent of db88d96... fixed fndecl sets curr function now
   for (int i = 0; i < this->stmts->NumElements(); i++) {
     Stmt *s = this->stmts->Nth(i);
     s->Emit();
   }
+
   vector< map<string, SymbolTable::DeclAssoc> >::iterator it = Node::symtable->symTable.begin();
   for(; it != Node::symtable->symTable.end(); it++) {
     map<string, SymbolTable::DeclAssoc> currMap = *it;
@@ -150,10 +143,7 @@ void DeclStmt::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *DeclStmt::Emit() {
-<<<<<<< HEAD
   //cerr << "DeclStmt Emit called" << endl;
-=======
->>>>>>> parent of db88d96... fixed fndecl sets curr function now
   decl->Emit();
   return NULL;
 }
@@ -189,7 +179,6 @@ void ForStmt::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *ForStmt::Emit() {
-<<<<<<< HEAD
   //cerr << "ForStmt Emit called" << endl;
   llvm::LLVMContext *context = irgen->GetContext();
   // creating the basicblocks
@@ -206,27 +195,12 @@ llvm::Value *ForStmt::Emit() {
 
   // create branch to terminate current BB and start loop header
   //cerr << "branch for header" << endl;
-=======
-  llvm::LLVMContext *context = irgen->GetContext();
-  // creating the basicblocks
-  llvm::BasicBlock *footerBB = llvm::BasicBlock::Create(*context, "footerBB", irgen->GetFunction());
-  llvm::BasicBlock *stepBB = llvm::BasicBlock::Create(*context, "stepBB", irgen->GetFunction());
-  llvm::BasicBlock *bodyBB = llvm::BasicBlock::Create(*context, "bodyBB", irgen->GetFunction());
-  llvm::BasicBlock *headerBB = llvm::BasicBlock::Create(*context, "headerBB", irgen->GetFunction());
-
-  // emit init
-  llvm::Value *initialization = this->init->Emit();
-
-  // create branch to terminate current BB and start loop header
->>>>>>> parent of db88d96... fixed fndecl sets curr function now
   llvm::BranchInst::Create(headerBB, irgen->GetBasicBlock());
   irgen->SetBasicBlock(headerBB);
-
   // emit test
   llvm::Value *cond = this->test->Emit();
 
   // irgen headerBB
-<<<<<<< HEAD
   //cerr << "branch for main" << endl;
 
   llvm::BranchInst::Create(bodyBB, footerBB, cond, irgen->GetBasicBlock());
@@ -235,40 +209,34 @@ llvm::Value *ForStmt::Emit() {
   //cerr << "branch for footer" << endl;
 
   /*
-=======
-  llvm::BranchInst::Create(bodyBB, footerBB, cond, irgen->GetBasicBlock());
-
-  // jump to footer
->>>>>>> parent of db88d96... fixed fndecl sets curr function now
   llvm::BranchInst::Create(footerBB, irgen->GetBasicBlock());
   irgen->SetBasicBlock(footerBB);
+  */
 
   // saving footerBB for break statement
   Node::breakStack->push_back(footerBB);
 
   // saving headerBB for continue statement
-  Node::continueStack->push_back(headerBB);
+  Node::continueStack->push_back(stepBB);
 
   // emit body
-  llvm::Value *body = this->body->Emit();
+  //llvm::BranchInst::Create(bodyBB, irgen->GetBasicBlock());
   irgen->SetBasicBlock(bodyBB);
+  llvm::Value *body = this->body->Emit();
+  //irgen->SetBasicBlock(bodyBB);
   // check terminator instruction
   if(bodyBB->getTerminator() == NULL) {
-<<<<<<< HEAD
     //cerr << "branch for step" << endl;
-=======
->>>>>>> parent of db88d96... fixed fndecl sets curr function now
     llvm::BranchInst::Create(stepBB, irgen->GetBasicBlock());
   }
 
+  irgen->SetBasicBlock(stepBB);
   llvm::Value *step = this->step->Emit();
-<<<<<<< HEAD
   //cerr << "branch back to header" << endl;
-=======
->>>>>>> parent of db88d96... fixed fndecl sets curr function now
   llvm::BranchInst::Create(headerBB, irgen->GetBasicBlock());
 
   // pop break stack
+  irgen->SetBasicBlock(footerBB);
   Node::breakStack->pop_back();
 
   // pop continue stack
@@ -376,11 +344,7 @@ void ReturnStmt::PrintChildren(int indentLevel) {
 
 llvm::Value *ReturnStmt::Emit() {
   // TODO Check the expression and perform something depending on that?
-<<<<<<< HEAD
   //cerr << "ReturnEmit called" << endl;
-=======
-  //cerr << "returnEmit called" << endl;
->>>>>>> parent of db88d96... fixed fndecl sets curr function now
   llvm::LLVMContext *context = irgen->GetContext();
   llvm::Value *val;
   if (this->expr != NULL) {
@@ -433,7 +397,6 @@ void SwitchStmt::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *SwitchStmt::Emit() {
-  vector<Stmt*> caseStack = new vector<Stmt*>();
   //TODO OMG What do here
   /*
     Find  all the cases /default  case  and create  BB  for each  of  them
@@ -444,7 +407,6 @@ llvm::Value *SwitchStmt::Emit() {
     Emit  for statement in  case  statement
     Create  terminator  instrucCon
   */
-    
   for(int i = 0; i < this->cases->NumElements(); i++) {
 
   }

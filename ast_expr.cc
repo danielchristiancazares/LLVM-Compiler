@@ -302,7 +302,7 @@ llvm::Value *LogicalExpr::Emit() {
 }
 
 llvm::Value *AssignExpr::Emit() {
-  //cerr << "Calling assign" << endl;
+  cerr << "AssignExpr called" << endl;
   VarExpr *lhsVar = dynamic_cast<VarExpr *>(left);
   llvm::Value *rhs = right->Emit();
 
@@ -320,6 +320,7 @@ llvm::Value *AssignExpr::Emit() {
   if(this->op->IsOp("=")) {
     return new llvm::StoreInst(rhs, lhs, irgen->GetBasicBlock());
   } else if(this->op->IsOp("*=")) {
+    cerr << "Mul assign is called" << endl;
     llvm::Type *type = rhs->getType();
     llvm::Value *rhsMult = NULL;
     if(type == irgen->GetFloatType()) {
@@ -329,6 +330,7 @@ llvm::Value *AssignExpr::Emit() {
     }
     return new llvm::StoreInst(rhsMult, lhs, irgen->GetBasicBlock());
   } else if(this->op->IsOp("+=")) {
+    cerr << "Plus assign is called" << endl;
     llvm::Type *type = rhs->getType();
     llvm::Value *rhsAdd = NULL;
     if(type == irgen->GetFloatType()) {
@@ -386,6 +388,7 @@ llvm::Value *FieldAccess::Emit() {
 }
 
 llvm::Value *RelationalExpr::Emit() {
+  cerr << "RealtionalExpr called" << endl;
   llvm::Value *lhs = left->Emit();
   llvm::Value *rhs = right->Emit();
   llvm::Type *type = lhs->getType();
