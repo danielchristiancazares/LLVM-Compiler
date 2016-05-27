@@ -391,6 +391,8 @@ void SwitchStmt::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *SwitchStmt::Emit() {
+  llvm::LLVMContext *context = irgen->GetContext();
+  llvm::Function *function = irgen->GetFunction();
   //TODO OMG What do here
   /*
     Find  all the cases /default  case  and create  BB  for each  of  them
@@ -401,22 +403,31 @@ llvm::Value *SwitchStmt::Emit() {
     Emit  for statement in  case  statement
     Create  terminator  instrucCon
   */
+
+  llvm::BasicBlock *defaultBlock = llvm::BasicBlock::Create(*context,"default",f);
+  llvm::SwitchInst *switchInst = llvm::SwitchInst::Create(this->expr->Emit(),
+                                                          defaultBlock,
+                                                          this->cases->NumElements(),
+                                                          irgen->GetBasicBlock());
+
+
   for(int i = 0; i < this->cases->NumElements(); i++) {
 
   }
+  llvm::BasicBlock *footerBlock = llvm::BasicBlock::Create(*con,"footer",f);
+  brstk->push_back(footerBlock);
+  
+  irgen->SetBasicBlock(footerBlock);
 
   return NULL;
 }
 
 llvm::Value *BreakStmt::Emit() {
-  //TODO Create a BasicBlock within SwitchStmt to declare whether or not
-  //TODO to exit.
   llvm::BranchInst::Create (Node::breakStack->back(), irgen->GetBasicBlock ());
   return NULL;
 }
 
 llvm::Value *ContinueStmt::Emit() {
-  //TODO Same as above.
   llvm::BranchInst::Create (Node::continueStack->back(), irgen->GetBasicBlock ());
   return NULL;
 }

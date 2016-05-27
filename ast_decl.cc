@@ -54,11 +54,9 @@ llvm::Value *VarDecl::Emit() {
 
   // sets the constant
   if(this->assignTo != NULL) {
-    cerr << "[VarDecl] llvm:cast<llvm::Constant>" << endl;
     constant = llvm::cast<llvm::Constant>(this->assignTo->Emit());
   }
   else {
-    cerr << "[VarDecl] llvm::Constant::getNullValue(type)" << endl;
     constant = llvm::Constant::getNullValue(type);
   }
 

@@ -131,7 +131,6 @@ ArrayAccess::ArrayAccess(yyltype loc, Expr *b, Expr *s) : LValue(loc) {
 
 llvm::Value *ArithmeticExpr::Emit() {
   llvm::Value* value = NULL;
-  llvm::Value* binaryOp = NULL;
   llvm::Value* lhs = (this->left == NULL) ? NULL : this->left->Emit();
   llvm::Value* rhs = this->right->Emit();
   Operator* arithOp = this->op;
@@ -185,7 +184,8 @@ llvm::Value *ArithmeticExpr::Emit() {
     } else {
       cerr << "[ArithmeticExpr] Unary operation: " << arithOp << endl;
       llvm::Value* constOne;
-
+      llvm::Value* binaryOp = NULL;
+      
       rhsName = dynamic_cast<VarExpr*>(this->right)->GetIdentifier()->GetName();
 
       vector < map <string, SymbolTable::DeclAssoc> > ::reverse_iterator it = symtable->symTable.rbegin();
