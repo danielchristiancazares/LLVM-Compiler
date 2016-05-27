@@ -131,6 +131,7 @@ ArrayAccess::ArrayAccess(yyltype loc, Expr *b, Expr *s) : LValue(loc) {
 
 llvm::Value *ArithmeticExpr::Emit() {
   llvm::Value* value = NULL;
+  llvm::Value* binaryOp = NULL;
   llvm::Value* lhs = (this->left == NULL) ? NULL : this->left->Emit();
   llvm::Value* rhs = this->right->Emit();
   Operator* arithOp = this->op;
@@ -184,8 +185,7 @@ llvm::Value *ArithmeticExpr::Emit() {
     } else {
       cerr << "[ArithmeticExpr] Unary operation: " << arithOp << endl;
       llvm::Value* constOne;
-      llvm::Value* binaryOp = NULL;
-      
+
       rhsName = dynamic_cast<VarExpr*>(this->right)->GetIdentifier()->GetName();
 
       vector < map <string, SymbolTable::DeclAssoc> > ::reverse_iterator it = symtable->symTable.rbegin();
@@ -222,8 +222,40 @@ llvm::Value *ArithmeticExpr::Emit() {
     }
   } else if(lhsFieldAccess && !rhsFieldAccess) {
     cerr << "[ArithmeticExpr] Only left operand is of FieldAccess type." << endl;
+    if(type == irgen->GetIntType()) {
+      cerr << "[ArithmeticExpr] Integer operation." << endl;
+      if(this->op->IsOp("-")) {
+        cerr << "[ArithmeticExpr] Returning int subtraction BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateSub(lhs, rhs, "", irgen->GetBasicBlock());
+      } else if(this->op->IsOp("+")) {
+        cerr << "[ArithmeticExpr] Returning int addition BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateAdd(lhs, rhs, "", irgen->GetBasicBlock());
+      } else if(this->op->IsOp("*")) {
+        cerr << "[ArithmeticExpr] Returning int multiplication BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateMul(lhs, rhs, "", irgen->GetBasicBlock());
+      } else if(this->op->IsOp("/")) {
+        cerr << "[ArithmeticExpr] Returning int division BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateSDiv(lhs, rhs, "", irgen->GetBasicBlock());
+      }
+    }
   } else if(!lhsFieldAccess && rhsFieldAccess) {
     cerr << "[ArithmeticExpr] Only right operand is of FieldAccess type." << endl;
+    if(type == irgen->GetIntType()) {
+      cerr << "[ArithmeticExpr] Integer operation." << endl;
+      if(this->op->IsOp("-")) {
+        cerr << "[ArithmeticExpr] Returning int subtraction BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateSub(lhs, rhs, "", irgen->GetBasicBlock());
+      } else if(this->op->IsOp("+")) {
+        cerr << "[ArithmeticExpr] Returning int addition BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateAdd(lhs, rhs, "", irgen->GetBasicBlock());
+      } else if(this->op->IsOp("*")) {
+        cerr << "[ArithmeticExpr] Returning int multiplication BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateMul(lhs, rhs, "", irgen->GetBasicBlock());
+      } else if(this->op->IsOp("/")) {
+        cerr << "[ArithmeticExpr] Returning int division BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateSDiv(lhs, rhs, "", irgen->GetBasicBlock());
+      }
+    }
   } else if(!lhsFieldAccess && !rhsFieldAccess) {
     cerr << "[ArithmeticExpr] Neither operand is of FieldAccess type." << endl;
     if(this->left) {

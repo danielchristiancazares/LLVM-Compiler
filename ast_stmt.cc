@@ -404,20 +404,20 @@ llvm::Value *SwitchStmt::Emit() {
     Create  terminator  instrucCon
   */
 
-  llvm::BasicBlock *defaultBlock = llvm::BasicBlock::Create(*context,"default",f);
-  llvm::SwitchInst *switchInst = llvm::SwitchInst::Create(this->expr->Emit(),
-                                                          defaultBlock,
-                                                          this->cases->NumElements(),
-                                                          irgen->GetBasicBlock());
-
-
-  for(int i = 0; i < this->cases->NumElements(); i++) {
-
-  }
-  llvm::BasicBlock *footerBlock = llvm::BasicBlock::Create(*con,"footer",f);
-  brstk->push_back(footerBlock);
-  
-  irgen->SetBasicBlock(footerBlock);
+//
+//  llvm::SwitchInst *switchInst = llvm::SwitchInst::Create(this->expr->Emit(),
+//                                                          defaultBlock,
+//                                                          this->cases->NumElements(),
+//                                                          irgen->GetBasicBlock());
+//
+//
+//  for(int i = 0; i < this->cases->NumElements(); i++) {
+//    llvm::BasicBlock *caseBlock = llvm::BasicBlock::Create(*context,"case" + i,function);
+//  }
+//  llvm::BasicBlock *footerBlock = llvm::BasicBlock::Create(*context,"footer",function);
+//  breakStack->push_back(footerBlock);
+//
+//  irgen->SetBasicBlock(footerBlock);
 
   return NULL;
 }
