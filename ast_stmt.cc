@@ -248,9 +248,9 @@ llvm::Value *WhileStmt::Emit() {
   //TODO Logic for this is intense
   // making the basic blocks
   llvm::LLVMContext *context = irgen->GetContext();
-  llvm::BasicBlock *headerBB = llvm::BasicBlock::Create(*context, "headerBB", irgen->GetFunction());
-  llvm::BasicBlock *bodyBB = llvm::BasicBlock::Create(*context, "bodyBB", irgen->GetFunction());
-  llvm::BasicBlock *footerBB = llvm::BasicBlock::Create(*context, "footerBB", irgen->GetFunction());
+  llvm::BasicBlock *headerBB = llvm::BasicBlock::Create(*context, "WHILEheaderBB", irgen->GetFunction());
+  llvm::BasicBlock *bodyBB = llvm::BasicBlock::Create(*context, "WHILEbodyBB", irgen->GetFunction());
+  llvm::BasicBlock *footerBB = llvm::BasicBlock::Create(*context, "WHILEfooterBB", irgen->GetFunction());
 
   // create branch to terminate current BB and start loop header
   llvm::BranchInst::Create(headerBB, irgen->GetBasicBlock());
@@ -271,7 +271,7 @@ llvm::Value *WhileStmt::Emit() {
   llvm::Value *body = this->body->Emit();
 
   // check terminator instruction
-  if (bodyBB->getTerminator() == NULL) {
+  if (irgen->GetBasicBlock()->getTerminator() == NULL) {
     llvm::BranchInst::Create(headerBB, irgen->GetBasicBlock());
   }
 
