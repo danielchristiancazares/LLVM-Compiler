@@ -194,6 +194,8 @@ class SwitchLabel : public Stmt {
 
   void PrintChildren(int indentLevel);
 
+  Expr* getLabel() { return label; }
+
   llvm::Value *Emit();
 };
 
@@ -204,6 +206,7 @@ class Case : public SwitchLabel {
   Case(Expr *label, Stmt *stmt) : SwitchLabel(label, stmt) { }
 
   const char *GetPrintNameForNode() { return "Case"; }
+  llvm::Value *Emit();
 };
 
 class Default : public SwitchLabel {
@@ -211,6 +214,7 @@ class Default : public SwitchLabel {
   Default(Stmt *stmt) : SwitchLabel(stmt) { }
 
   const char *GetPrintNameForNode() { return "Default"; }
+  llvm::Value *Emit();
 };
 
 class SwitchStmt : public Stmt {
