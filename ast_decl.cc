@@ -91,12 +91,12 @@ llvm::Value *VarDecl::Emit() {
     cerr << "JK not at currDeclAssoc" << endl;
     */
     if(Node::symtable->symTable.size() <= 1) {
-      cerr << "Global variable declared on non-empty table" << endl;
+      cerr << "[FnDecl] Global variable declared on non-empty table" << endl;
       value = new llvm::GlobalVariable(*mod, type, false, llvm::GlobalValue::ExternalLinkage, constant, name);
       declassoc.isGlobal = true;
     }
     else {
-      cerr << "Local variable declared on non-empty table" << endl;
+      cerr << "[VarDecl] Local variable declared on non-empty table" << endl;
       value = new llvm::AllocaInst(type, name, irgen->GetBasicBlock());
       new llvm::StoreInst(constant, value, irgen->GetBasicBlock());
     }
@@ -213,6 +213,7 @@ llvm::Value *FnDecl::Emit() {
     VarDecl *v = this->formals->Nth(i);
     name = v->GetIdentifier()->GetName();
     tempType = irgen->Converter(v->GetType());
+    cerr << "[FnDecl] Local variable is being created from formals" << endl;
     value = new llvm::AllocaInst(tempType, name, irgen->GetBasicBlock());
     new llvm::StoreInst(arg, value, irgen->GetBasicBlock());
     declassoc.value = value;
@@ -231,9 +232,15 @@ llvm::Value *FnDecl::Emit() {
 //    return new llvm::UnreachableInst(*context,irgen->GetBasicBlock());
 //  }
 
-  return f;
+  if(irgen->GetBasicBlock()->getTerminator() == NULL) {
+    cerr << "[FnDecl] UnreachableInst returned." << endl;
+    new llvm::UnreachableInst(*context, irgen->GetBasicBlock());
+  }
 
+  irgen->SetBasicBlock(NULL);
+  irgen->SetFunction(NULL);
 
+  return NULL;
 
 // create a return instruction
 //    llvm::Value *val = llvm::ConstantInt::get(intTy, 1);

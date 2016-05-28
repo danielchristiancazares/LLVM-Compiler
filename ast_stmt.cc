@@ -302,27 +302,35 @@ llvm::Value *IfStmt::Emit() {
   //TODO Logic for this is intense
   llvm::Value *cond = this->test->Emit();
   llvm::LLVMContext *context = irgen->GetContext();
-  llvm::BasicBlock *footerBB = llvm::BasicBlock::Create(*context, "IFfooterBB", irgen->GetFunction());
+  llvm::BasicBlock *thenBB = llvm::BasicBlock::Create(*context, "IFthenBB", irgen->GetFunction());
   llvm::BasicBlock *elseBB = NULL;
   if(this->elseBody != NULL) {
+    cerr << "[IfStmt] Made a else BB" << endl;
     elseBB = llvm::BasicBlock::Create(*context, "IFelseBB", irgen->GetFunction());
   }
-  llvm::BasicBlock *thenBB = llvm::BasicBlock::Create(*context, "IFthenBB", irgen->GetFunction());
+  llvm::BasicBlock *footerBB = llvm::BasicBlock::Create(*context, "IFfooterBB", irgen->GetFunction());
   llvm::BranchInst::Create(thenBB, elseBody ? elseBB : footerBB, cond, irgen->GetBasicBlock());
 
   irgen->SetBasicBlock(thenBB);
+  map<string, SymbolTable::DeclAssoc> newScope;
+  Node::symtable->symTable.push_back(newScope);
   this->body->Emit();
   if(irgen->GetBasicBlock()->getTerminator() == NULL) {
     llvm::BranchInst::Create(footerBB, irgen->GetBasicBlock());
   }
   
+  irgen->SetBasicBlock(footerBB); 
+
   if(this->elseBody != NULL) {
     irgen->SetBasicBlock(elseBB);
+    map<string, SymbolTable::DeclAssoc> newScope2;
+    Node::symtable->symTable.push_back(newScope2);
     this->elseBody->Emit();
-    llvm::BranchInst::Create(footerBB, irgen->GetBasicBlock());
+    if(irgen->GetBasicBlock()->getTerminator() == NULL) {
+      llvm::BranchInst::Create(footerBB, irgen->GetBasicBlock());
+    }
+    irgen->SetBasicBlock(footerBB);
   }
-
-  irgen->SetBasicBlock(footerBB);
 
   return NULL;
 }
