@@ -403,14 +403,121 @@ llvm::Value *SwitchStmt::Emit() {
     Emit  of  Expression
     Create  Switch  instrucCon
     For each  case
-    ‘addCase’ to  Switch  instrucCon
-    Emit  for statement in  case  statement
-    Create  terminator  instrucCon
+      ‘addCase’ to  Switch  instrucCon
+      Emit  for statement in  case  statement
+      Create  terminator  instrucCon
   */
-  for(int i = 0; i < this->cases->NumElements(); i++) {
+  cerr << "Switch Emit() is called" << endl;
+  vector<llvm::BasicBlock*> caseStack;
+  vector<llvm::BasicBlock*> caseTerminator;
+  int numOfCases = 0;
+  cerr << "There are " << this->cases->NumElements() << " in the list of cases" << endl;
+  llvm::LLVMContext *context = irgen->GetContext();
+  llvm::BasicBlock *footerBB = llvm::BasicBlock::Create(*context, "footerBB", irgen->GetFunction());
+  cerr << "pushing footer block to breakstack" << endl;
+  breakStack->push_back(footerBB);
 
+  for(int i = 0; i < this->cases->NumElements(); i++) {
+    if(dynamic_cast<Case*>(this->cases->Nth(i)) != NULL) {
+      cerr << "pushing case block to stack: case" << i << endl;
+      llvm::BasicBlock *caseBB = llvm::BasicBlock::Create(*context, "", irgen->GetFunction());
+      caseStack.push_back(caseBB);
+      caseTerminator.push_back(caseBB);
+      numOfCases++;
+    }
+    else {
+      cerr << "casestack is not being populated" << endl;
+    }
+  }
+  cerr << "Number of cases: " << numOfCases << endl;
+  cerr << "pushing default block to casestack" << endl;
+  llvm::BasicBlock *defaultBB = llvm::BasicBlock::Create(*context, "default", irgen->GetFunction());
+  caseStack.push_back(defaultBB);
+  //caseTerminator.push_back(defaultBB);
+  reverse(caseStack.begin(), caseStack.end());
+  reverse(caseTerminator.begin(), caseTerminator.end());
+  llvm::Value *value = this->expr->Emit();
+  llvm::SwitchInst *switchStmt = llvm::SwitchInst::Create(value, defaultBB, numOfCases, irgen->GetBasicBlock());
+  /*
+  llvm::BasicBlock *headerBB = llvm::BasicBlock::Create(*context, "headerBB", irgen->GetFunction());
+  llvm::BranchInst::Create(headerBB, irgen->GetBasicBlock());
+  irgen->SetBasicBlock(headerBB);
+  */
+  // void   addCase (ConstantInt *OnVal, BasicBlock *Dest)
+  for(int i = 0; i < this->cases->NumElements(); i++) {
+    cerr << "caseStack is at size " << caseStack.size() << endl;
+    if(dynamic_cast<Case*>(this->cases->Nth(i)) != NULL && caseStack.size() > 0) {
+      cerr << "adding case to switch" << endl;
+      llvm::BasicBlock *tempBB = caseStack.back();
+      llvm::ConstantInt* caseLabel = llvm::cast<llvm::ConstantInt>((((SwitchLabel*)this->cases->Nth(i))->getLabel()->Emit()));
+      switchStmt->addCase(caseLabel, tempBB);
+      /*
+      if(irgen->GetBasicBlock()->getTerminator() == NULL) {
+        llvm::BranchInst::Create(tempBB, irgen->GetBasicBlock());
+      }
+      */
+      irgen->SetBasicBlock(tempBB);
+      this->cases->Nth(i)->Emit();
+
+      caseStack.pop_back();
+      /*
+      llvm::BasicBlock *nextBlock = caseStack.back();
+      if(irgen->GetBasicBlock()->getTerminator() == NULL) {
+        llvm::BranchInst::Create(nextBlock, irgen->GetBasicBlock());
+      }
+      */
+    }
+    else if(dynamic_cast<Default*>(this->cases->Nth(i)) != NULL && caseStack.size() == 1) {
+      cerr << "Default stmt: adding default" << endl;
+      llvm::BasicBlock *tempBB = caseStack.back();
+      /*
+      if(irgen->GetBasicBlock()->getTerminator() == NULL) {
+        llvm::BranchInst::Create(tempBB, irgen->GetBasicBlock());
+      }
+      */
+      irgen->SetBasicBlock(tempBB);
+      this->cases->Nth(i)->Emit();
+      caseStack.pop_back();
+    }
+    else {
+      cerr << "Not case or default" << endl;
+      this->cases->Nth(i)->Emit();
+    }
   }
 
+  while(caseTerminator.size() > 0) {
+    llvm::BasicBlock *tempBB = caseTerminator.back();
+    if(tempBB->getTerminator() == NULL && caseTerminator.size() == 1) {
+      llvm::BranchInst::Create(defaultBB, tempBB);
+      caseTerminator.pop_back();
+    }
+    else if(tempBB->getTerminator() == NULL && caseTerminator.size() > 0) {
+      caseTerminator.pop_back();
+      llvm::BasicBlock *nextBlock = caseTerminator.back();
+      llvm::BranchInst::Create(nextBlock, tempBB);
+    }
+    else if(caseTerminator.size() > 0){
+      caseTerminator.pop_back();
+    }
+  }
+
+  if(defaultBB->getTerminator() == NULL) {
+    llvm::BranchInst::Create(footerBB, defaultBB);
+  }
+
+  breakStack->pop_back();
+  irgen->SetBasicBlock(footerBB);
+
+  return NULL;
+}
+
+llvm::Value *Case::Emit() {
+  this->stmt->Emit();
+  return NULL;
+}
+
+llvm::Value *Default::Emit() {
+  this->stmt->Emit();
   return NULL;
 }
 
@@ -418,12 +525,14 @@ llvm::Value *BreakStmt::Emit() {
   //TODO Create a BasicBlock within SwitchStmt to declare whether or not
   //TODO to exit.
   llvm::BranchInst::Create (Node::breakStack->back(), irgen->GetBasicBlock ());
+  irgen->SetBasicBlock(Node::breakStack->back());
   return NULL;
 }
 
 llvm::Value *ContinueStmt::Emit() {
   //TODO Same as above.
   llvm::BranchInst::Create (Node::continueStack->back(), irgen->GetBasicBlock ());
+  irgen->SetBasicBlock(Node::continueStack->back());
   return NULL;
 }
 
