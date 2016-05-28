@@ -416,33 +416,34 @@ llvm::Value *LogicalExpr::Emit() {
 
 llvm::Value *AssignExpr::Emit() {
   cerr << "[AssignExpr] AssignExpr::Emit()" << endl;
+  llvm::Value *lhs = NULL;
   VarExpr *lhsVar = dynamic_cast<VarExpr *>(left);
   if(lhsVar) {
     cerr << "[AssignExpr] LHS casted to VarExpr" << endl;
+    string s = lhsVar->GetIdentifier()->GetName();
+    vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = this->symtable->symTable.rbegin();
+    for (; it != this->symtable->symTable.rend() && lhs == NULL; ++it) {
+      map<string, SymbolTable::DeclAssoc> currMap = *it;
+      if(currMap.find(s) != currMap.end()) {
+        lhs = currMap.find(s)->second.value;
+        break;
+      }
+    }
   } else {
-    lhsVar = dynamic_cast<FieldAccess *>(left);
     cerr << "[AssignExpr] LHS casted to FieldAccess" << endl;
+    FieldAccess* lhsFieldAccess = dynamic_cast<FieldAccess *>(left);
+    lhs = lhsFieldAccess->Emit();
+    cerr << "[AssignExpr] LHS Post-FieldAccess-Emit" << endl;
   }
   llvm::Value *binaryOp = NULL;
-  //llvm::Value *rhs = right->Emit();
 
-  llvm::Value *lhs = NULL;
-  string s = lhsVar->GetIdentifier()->GetName();
-  vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = this->symtable->symTable.rbegin();
-  for (; it != this->symtable->symTable.rend() && lhs == NULL; ++it) {
-    map<string, SymbolTable::DeclAssoc> currMap = *it;
-    if(currMap.find(s) != currMap.end()) {
-      lhs = currMap.find(s)->second.value;
-      break;
-    }
-  }
-
+  cerr << "[AssignExpr] Found identifier." << endl;
   if(this->op->IsOp("=")) {
-    cerr << "[AssignExpr] '=' is the Op" << endl;
+    cerr << "[AssignExpr] Simple Assignment is the Op" << endl;
     return new llvm::StoreInst(right->Emit(), lhs, irgen->GetBasicBlock());
   } 
   else if(this->op->IsOp("*=")) {
-    cerr << "[AssignExpr] '*' is the Op" << endl;
+    cerr << "[AssignExpr] Multiplication is the Op" << endl;
     llvm::Type *type = lhs->getType();
     if(type == irgen->GetFloatType()) {
       binaryOp = llvm::BinaryOperator::CreateFMul(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
@@ -451,15 +452,37 @@ llvm::Value *AssignExpr::Emit() {
       binaryOp = llvm::BinaryOperator::CreateMul(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
     }
     return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
-  } 
+  }
   else if(this->op->IsOp("+=")) {
-    cerr << "[AssignExpr] '+' is the Op" << endl;
+    cerr << "[AssignExpr] Addition is the Op" << endl;
     llvm::Type *type = lhs->getType();
     if(type == irgen->GetFloatType()) {
       binaryOp = llvm::BinaryOperator::CreateFAdd(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
     } 
     else {
       binaryOp = llvm::BinaryOperator::CreateAdd(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
+    }
+    return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
+  }
+  else if(this->op->IsOp("-=")) {
+    cerr << "[AssignExpr] Subtraction is the Op" << endl;
+    llvm::Type *type = lhs->getType();
+    if(type == irgen->GetFloatType()) {
+      binaryOp = llvm::BinaryOperator::CreateFSub(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
+    }
+    else {
+      binaryOp = llvm::BinaryOperator::CreateSub(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
+    }
+    return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
+  }
+  else if(this->op->IsOp("\\=")) {
+    cerr << "[AssignExpr] Division is the Op" << endl;
+    llvm::Type *type = lhs->getType();
+    if(type == irgen->GetFloatType()) {
+      binaryOp = llvm::BinaryOperator::CreateFSub(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
+    }
+    else {
+      binaryOp = llvm::BinaryOperator::CreateSub(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
     }
     return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
   }
@@ -511,6 +534,7 @@ llvm::Value *FieldAccess::Emit() {
   cerr << "[FieldAccess] FieldAccess::Emit()" << endl;
   llvm::Value *fieldBase = this->base->Emit();
   string fieldName = this->field->GetName();
+  cerr << "[FieldAccess] Base: " << this->base << "." << fieldName << endl;
   if(fieldName.size() == 1) {
     cerr << "[FieldAccess] Field is length one" << endl;
     if(fieldName == "x") {
