@@ -1,0 +1,6 @@
+In approaching this assignment one of the things we started out 
+with was creating Emit() functions for to the nodes, implemented 
+using the same virtual method business used for the Print and Check 
+in the last programming projects..
+
+To be cont.. Need to summarize the rest
