@@ -416,35 +416,37 @@ llvm::Value *LogicalExpr::Emit() {
 
 llvm::Value *AssignExpr::Emit() {
   cerr << "[AssignExpr] AssignExpr::Emit()" << endl;
+  llvm::Value *lhs = NULL;
   VarExpr *lhsVar = dynamic_cast<VarExpr *>(left);
   llvm::Value* binaryOp = NULL;
   if(lhsVar) {
     cerr << "[AssignExpr] LHS casted to VarExpr" << endl;
-  } else {
-    lhsVar = dynamic_cast<FieldAccess *>(left);
-    cerr << "[AssignExpr] LHS casted to FieldAccess" << endl;
-  }
-  //llvm::Value *rhs = right->Emit();
-
-  llvm::Value *lhs = NULL;
-  string s = lhsVar->GetIdentifier()->GetName();
-  vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = this->symtable->symTable.rbegin();
-  for (; it != this->symtable->symTable.rend() && lhs == NULL; ++it) {
-    map<string, SymbolTable::DeclAssoc> currMap = *it;
-    if(currMap.find(s) != currMap.end()) {
-      lhs = currMap.find(s)->second.value;
-      break;
+    string s = lhsVar->GetIdentifier()->GetName();
+    vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = this->symtable->symTable.rbegin();
+    for (; it != this->symtable->symTable.rend() && lhs == NULL; ++it) {
+      map<string, SymbolTable::DeclAssoc> currMap = *it;
+      if(currMap.find(s) != currMap.end()) {
+        lhs = currMap.find(s)->second.value;
+        break;
+      }
     }
+  } else {
+    cerr << "[AssignExpr] LHS casted to FieldAccess" << endl;
+    FieldAccess* lhsFieldAccess = dynamic_cast<FieldAccess *>(left);
+    lhs = lhsFieldAccess->Emit();
+    cerr << "[AssignExpr] LHS Post-FieldAccess-Emit" << endl;
   }
 
+  cerr << "[AssignExpr] Found identifier." << endl;
   llvm::Type *type = lhs->getType();
 
   if(this->op->IsOp("=")) {
-    cerr << "[AssignExpr] '=' is the Op" << endl;
+    cerr << "[AssignExpr] Simple Assignment is the Op" << endl;
     return new llvm::StoreInst(right->Emit(), lhs, irgen->GetBasicBlock());
   } 
   else if(this->op->IsOp("*=")) {
-    cerr << "[AssignExpr] '*=' is the Op" << endl;
+    cerr << "[AssignExpr] Multiplication is the Op" << endl;
+    llvm::Type *type = lhs->getType();
     if(type == irgen->GetFloatType()) {
       binaryOp = llvm::BinaryOperator::CreateFMul(left->Emit(), right->Emit(), "mulFAssign", irgen->GetBasicBlock());
     } 
@@ -452,7 +454,7 @@ llvm::Value *AssignExpr::Emit() {
       binaryOp = llvm::BinaryOperator::CreateMul(left->Emit(), right->Emit(), "mulAssign", irgen->GetBasicBlock());
     }
     return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
-  } 
+  }
   else if(this->op->IsOp("+=")) {
     cerr << "[AssignExpr] '+=' is the Op" << endl;
     if(type == irgen->GetFloatType()) {
@@ -467,7 +469,7 @@ llvm::Value *AssignExpr::Emit() {
     cerr << "[AssignExpr] '-=' is the Op" << endl;
     if(type == irgen->GetFloatType()) {
       binaryOp = llvm::BinaryOperator::CreateFSub(left->Emit(), right->Emit(), "subFAssign", irgen->GetBasicBlock());
-    } 
+    }
     else {
       binaryOp = llvm::BinaryOperator::CreateSub(left->Emit(), right->Emit(), "subAssign", irgen->GetBasicBlock());
     }
@@ -477,7 +479,7 @@ llvm::Value *AssignExpr::Emit() {
     cerr << "[AssignExpr] '/=' is the Op" << endl;
     if(type == irgen->GetFloatType()) {
       binaryOp = llvm::BinaryOperator::CreateFDiv(left->Emit(), right->Emit(), "divFAssign", irgen->GetBasicBlock());
-    } 
+    }
     else {
       binaryOp = llvm::BinaryOperator::CreateSDiv(left->Emit(), right->Emit(), "divAssign", irgen->GetBasicBlock());
     }
@@ -531,6 +533,7 @@ llvm::Value *FieldAccess::Emit() {
   cerr << "[FieldAccess] FieldAccess::Emit()" << endl;
   llvm::Value *fieldBase = this->base->Emit();
   string fieldName = this->field->GetName();
+  cerr << "[FieldAccess] Base: " << this->base << "." << fieldName << endl;
   if(fieldName.size() == 1) {
     cerr << "[FieldAccess] Field is length one" << endl;
     if(fieldName == "x") {
