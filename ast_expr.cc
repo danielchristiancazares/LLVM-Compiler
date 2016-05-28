@@ -52,15 +52,16 @@ void VarExpr::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *VarExpr::Emit() {
+  cerr << "[DEBUG] VarExpr::Emit()" << endl;
   llvm::Value *value = NULL;
   string s = this->GetIdentifier()->GetName();
   vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = Node::symtable->symTable.rbegin();
   for (; it != Node::symtable->symTable.rend(); ++it) {
     map<string, SymbolTable::DeclAssoc> currMap = *it;
     if(currMap.find(s) != currMap.end()) {
-      cerr << "Load called from varepr!!" << endl;
+      cerr << "[DEBUG] Loading value." << endl;
       value = currMap.find(s)->second.value;
-      cerr << "the value in varexpr is " << value << endl;
+      cerr << "[DEBUG] Identifier: " << this->GetIdentifier()->GetName() << ", Value: " << value << endl;
       llvm::Twine *twine = new llvm::Twine(this->GetIdentifier()->GetName());
       return new llvm::LoadInst(value, *twine, irgen->GetBasicBlock());
     }
@@ -129,98 +130,210 @@ ArrayAccess::ArrayAccess(yyltype loc, Expr *b, Expr *s) : LValue(loc) {
 }
 
 llvm::Value *ArithmeticExpr::Emit() {
-  // TODO This is going to be such a pain in the butt
   llvm::Value* value = NULL;
-  llvm::Value* lhs = NULL;
-  llvm::Value* rhs = NULL;
   llvm::Value* binaryOp = NULL;
-  llvm::Type* type = NULL;
+  llvm::Value* lhs = (this->left == NULL) ? NULL : this->left->Emit();
+  llvm::Value* rhs = this->right->Emit();
+  Operator* arithOp = this->op;
+  llvm::Type* type = rhs->getType();
 
-  // unaryOp
-  if(this->left == NULL) {
-    rhs = this->right->Emit();
-    type = rhs->getType();
-    llvm::Value* intOne = llvm::ConstantInt::get(irgen->GetIntType(), 1);
-    llvm::Value* floatOne = llvm::ConstantFP::get(irgen->GetFloatType(), 1.0);
+  cerr << "[ArithmeticExpr] ArithmeticExpr::Emit()" << endl;
+  string rhsName;
+  string lhsName;
 
-    string s = dynamic_cast<VarExpr*>(this->right)->GetIdentifier()->GetName();
-    vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = Node::symtable->symTable.rbegin();
-    for (; it != Node::symtable->symTable.rend(); ++it) {
-      map<string, SymbolTable::DeclAssoc> currMap = *it;
-      if(currMap.find(s) != currMap.end()) {
-        //cerr << "PostFix::finding value from symtable!!" << endl;
-        value = currMap.find(s)->second.value;
-        break;
+  FieldAccess *rhsFieldAccess = dynamic_cast<FieldAccess*>(this->right);
+  FieldAccess *lhsFieldAccess = dynamic_cast<FieldAccess*>(this->left);
+  if(lhsFieldAccess && rhsFieldAccess) {
+    cerr << "[ArithmeticExpr] Both operands are of FieldAccess type." << endl;
+    if(this->left) {
+      cerr << "[ArithmeticExpr] Multi operation: " << arithOp << endl;
+
+      if(type == irgen->GetIntType()) {
+        cerr << "[ArithmeticExpr] Integer operation." << endl;
+        if(this->op->IsOp("-")) {
+          cerr << "[ArithmeticExpr] Returning int subtraction BinaryOperator." << endl;
+          return llvm::BinaryOperator::CreateSub(lhs, rhs, "", irgen->GetBasicBlock());
+        } else if(this->op->IsOp("+")) {
+          cerr << "[ArithmeticExpr] Returning int addition BinaryOperator." << endl;
+          return llvm::BinaryOperator::CreateAdd(lhs, rhs, "", irgen->GetBasicBlock());
+        } else if(this->op->IsOp("*")) {
+          cerr << "[ArithmeticExpr] Returning int multiplication BinaryOperator." << endl;
+          return llvm::BinaryOperator::CreateMul(lhs, rhs, "", irgen->GetBasicBlock());
+        } else if(this->op->IsOp("/")) {
+          cerr << "[ArithmeticExpr] Returning int division BinaryOperator." << endl;
+          return llvm::BinaryOperator::CreateSDiv(lhs, rhs, "", irgen->GetBasicBlock());
+        }
       }
-    }
+      else if(type == irgen->GetFloatType()) {
+        cerr << "[ArithmeticExpr] Float operation." << endl;
+        if(this->op->IsOp("-")) {
+          cerr << "[ArithmeticExpr] Returning float subtraction BinaryOperator." << endl;
+          return llvm::BinaryOperator::CreateFSub(lhs, rhs, "", irgen->GetBasicBlock());
+        } else if(this->op->IsOp("+")) {
+          cerr << "[ArithmeticExpr] Returning float addition BinaryOperator." << endl;
+          return llvm::BinaryOperator::CreateFAdd(lhs, rhs, "", irgen->GetBasicBlock());
+        } else if(this->op->IsOp("*")) {
+          cerr << "[ArithmeticExpr] Returning float multiplication BinaryOperator." << endl;
+          return llvm::BinaryOperator::CreateFMul(lhs, rhs, "", irgen->GetBasicBlock());
+        } else if(this->op->IsOp("/")) {
+          cerr << "[ArithmeticExpr] Returning float division BinaryOperator." << endl;
+          return llvm::BinaryOperator::CreateFDiv(lhs, rhs, "", irgen->GetBasicBlock());
+        }
+      }
+//      new llvm::StoreInst(binaryOp, value, irgen->GetBasicBlock());
+//      return new llvm::LoadInst(value, "", irgen->GetBasicBlock());
+    } else {
+      cerr << "[ArithmeticExpr] Unary operation: " << arithOp << endl;
+      llvm::Value* constOne;
 
+      rhsName = dynamic_cast<VarExpr*>(this->right)->GetIdentifier()->GetName();
+
+      vector < map <string, SymbolTable::DeclAssoc> > ::reverse_iterator it = symtable->symTable.rbegin();
+      for (; it != symtable->symTable.rend(); ++it) {
+        map<string, SymbolTable::DeclAssoc> currMap = *it;
+        if(currMap.find(rhsName) != currMap.end()) {
+          value = currMap.find(rhsName)->second.value;
+          break;
+        }
+      }
+
+      if(type == irgen->GetIntType()) {
+        constOne = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+        if(this->op->IsOp("--")) {
+          cerr << "[ArithmeticExpr] Integer Subtraction Prefix" << endl;
+          binaryOp = llvm::BinaryOperator::CreateSub(rhs, constOne, "", irgen->GetBasicBlock());
+        } else {
+          cerr << "[ArithmeticExpr] Integer Addition Prefix" << endl;
+          binaryOp = llvm::BinaryOperator::CreateAdd(rhs, constOne, "", irgen->GetBasicBlock());
+        }
+      }
+      else if(type == irgen->GetFloatType()) {
+        constOne = llvm::ConstantFP::get(irgen->GetFloatType(), (float)1.0);
+        if(this->op->IsOp("--")) {
+          cerr << "[ArithmeticExpr] Float Subtraction Prefix" << endl;
+          binaryOp = llvm::BinaryOperator::CreateFSub(rhs, constOne, "", irgen->GetBasicBlock());
+        } else {
+          cerr << "[ArithmeticExpr] Float Addition Prefix" << endl;
+          binaryOp = llvm::BinaryOperator::CreateFAdd(rhs, constOne, "", irgen->GetBasicBlock());
+        }
+      }
+      new llvm::StoreInst(binaryOp, value, irgen->GetBasicBlock());
+      return new llvm::LoadInst(value, "", irgen->GetBasicBlock());
+    }
+  } else if(lhsFieldAccess && !rhsFieldAccess) {
+    cerr << "[ArithmeticExpr] Only left operand is of FieldAccess type." << endl;
     if(type == irgen->GetIntType()) {
-      if(this->op->IsOp("--")) {
-        binaryOp = llvm::BinaryOperator::CreateSub(rhs, intOne, "", irgen->GetBasicBlock());
-      }
-      else {
-        binaryOp = llvm::BinaryOperator::CreateAdd(rhs, intOne, "", irgen->GetBasicBlock());
+      cerr << "[ArithmeticExpr] Integer operation." << endl;
+      if(this->op->IsOp("-")) {
+        cerr << "[ArithmeticExpr] Returning int subtraction BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateSub(lhs, rhs, "", irgen->GetBasicBlock());
+      } else if(this->op->IsOp("+")) {
+        cerr << "[ArithmeticExpr] Returning int addition BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateAdd(lhs, rhs, "", irgen->GetBasicBlock());
+      } else if(this->op->IsOp("*")) {
+        cerr << "[ArithmeticExpr] Returning int multiplication BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateMul(lhs, rhs, "", irgen->GetBasicBlock());
+      } else if(this->op->IsOp("/")) {
+        cerr << "[ArithmeticExpr] Returning int division BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateSDiv(lhs, rhs, "", irgen->GetBasicBlock());
       }
     }
-    else if(type == irgen->GetFloatType()) {
-      if(this->op->IsOp("--")) {
-        binaryOp = llvm::BinaryOperator::CreateFSub(rhs, floatOne, "", irgen->GetBasicBlock());
+  } else if(!lhsFieldAccess && rhsFieldAccess) {
+    cerr << "[ArithmeticExpr] Only right operand is of FieldAccess type." << endl;
+    if(type == irgen->GetIntType()) {
+      cerr << "[ArithmeticExpr] Integer operation." << endl;
+      if(this->op->IsOp("-")) {
+        cerr << "[ArithmeticExpr] Returning int subtraction BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateSub(lhs, rhs, "", irgen->GetBasicBlock());
+      } else if(this->op->IsOp("+")) {
+        cerr << "[ArithmeticExpr] Returning int addition BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateAdd(lhs, rhs, "", irgen->GetBasicBlock());
+      } else if(this->op->IsOp("*")) {
+        cerr << "[ArithmeticExpr] Returning int multiplication BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateMul(lhs, rhs, "", irgen->GetBasicBlock());
+      } else if(this->op->IsOp("/")) {
+        cerr << "[ArithmeticExpr] Returning int division BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateSDiv(lhs, rhs, "", irgen->GetBasicBlock());
       }
-      else {
-        binaryOp = llvm::BinaryOperator::CreateFAdd(rhs, floatOne, "", irgen->GetBasicBlock());
+    }
+  } else if(!lhsFieldAccess && !rhsFieldAccess) {
+    cerr << "[ArithmeticExpr] Neither operand is of FieldAccess type." << endl;
+    if(this->left) {
+      cerr << "[ArithmeticExpr] Multi operation: " << arithOp << endl;
+
+      if(type == irgen->GetIntType()) {
+        if(this->op->IsOp("-")) {
+          cerr << "[ArithmeticExpr] Returning int subtraction BinaryOperator." << endl;
+          return llvm::BinaryOperator::CreateSub(lhs, rhs, "", irgen->GetBasicBlock());
+        } else if(this->op->IsOp("+")) {
+          cerr << "[ArithmeticExpr] Returning int addition BinaryOperator." << endl;
+          return llvm::BinaryOperator::CreateAdd(lhs, rhs, "", irgen->GetBasicBlock());
+        } else if(this->op->IsOp("*")) {
+          cerr << "[ArithmeticExpr] Returning int multiplication BinaryOperator." << endl;
+          return llvm::BinaryOperator::CreateMul(lhs, rhs, "", irgen->GetBasicBlock());
+        } else if(this->op->IsOp("/")) {
+          cerr << "[ArithmeticExpr] Returning int division BinaryOperator." << endl;
+          return llvm::BinaryOperator::CreateSDiv(lhs, rhs, "", irgen->GetBasicBlock());
+        }
       }
+      else if(type == irgen->GetFloatType()) {
+        if(this->op->IsOp("-")) {
+          cerr << "[ArithmeticExpr] Returning float subtraction BinaryOperator." << endl;
+          return llvm::BinaryOperator::CreateFSub(lhs, rhs, "", irgen->GetBasicBlock());
+        } else if(this->op->IsOp("+")) {
+          cerr << "[ArithmeticExpr] Returning float addition BinaryOperator." << endl;
+          return llvm::BinaryOperator::CreateFAdd(lhs, rhs, "", irgen->GetBasicBlock());
+        } else if(this->op->IsOp("*")) {
+          cerr << "[ArithmeticExpr] Returning float multiplication BinaryOperator." << endl;
+          return llvm::BinaryOperator::CreateFMul(lhs, rhs, "", irgen->GetBasicBlock());
+        } else if(this->op->IsOp("/")) {
+          cerr << "[ArithmeticExpr] Returning float division BinaryOperator." << endl;
+          return llvm::BinaryOperator::CreateFDiv(lhs, rhs, "", irgen->GetBasicBlock());
+        }
+      }
+//      new llvm::StoreInst(binaryOp, value, irgen->GetBasicBlock());
+//      return new llvm::LoadInst(value, "", irgen->GetBasicBlock());
+    } else {
+      cerr << "[ArithmeticExpr] Unary operation: " << arithOp << endl;
+      llvm::Value* constOne;
+
+      rhsName = dynamic_cast<VarExpr*>(this->right)->GetIdentifier()->GetName();
+
+      vector < map <string, SymbolTable::DeclAssoc> > ::reverse_iterator it = symtable->symTable.rbegin();
+      for (; it != symtable->symTable.rend(); ++it) {
+        map<string, SymbolTable::DeclAssoc> currMap = *it;
+        if(currMap.find(rhsName) != currMap.end()) {
+          value = currMap.find(rhsName)->second.value;
+          break;
+        }
+      }
+
+      if(type == irgen->GetIntType()) {
+        constOne = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+        if(this->op->IsOp("--")) {
+          cerr << "[ArithmeticExpr] Integer Subtraction Prefix" << endl;
+          binaryOp = llvm::BinaryOperator::CreateSub(rhs, constOne, "", irgen->GetBasicBlock());
+        } else {
+          cerr << "[ArithmeticExpr] Integer Addition Prefix" << endl;
+          binaryOp = llvm::BinaryOperator::CreateAdd(rhs, constOne, "", irgen->GetBasicBlock());
+        }
+      }
+      else if(type == irgen->GetFloatType()) {
+        constOne = llvm::ConstantFP::get(irgen->GetFloatType(), (float)1.0);
+        if(this->op->IsOp("--")) {
+          cerr << "[ArithmeticExpr] Float Subtraction Prefix" << endl;
+          binaryOp = llvm::BinaryOperator::CreateFSub(rhs, constOne, "", irgen->GetBasicBlock());
+        } else {
+          cerr << "[ArithmeticExpr] Float Addition Prefix" << endl;
+          binaryOp = llvm::BinaryOperator::CreateFAdd(rhs, constOne, "", irgen->GetBasicBlock());
+        }
+      }
+      new llvm::StoreInst(binaryOp, value, irgen->GetBasicBlock());
+      return new llvm::LoadInst(value, "", irgen->GetBasicBlock());
     }
   }
-  // regular ops
-  else {
-    rhs = this->right->Emit();
-    lhs = this->left->Emit();
-    type = lhs->getType();
-
-    string s = dynamic_cast<VarExpr*>(this->left)->GetIdentifier()->GetName();
-
-    vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = Node::symtable->symTable.rbegin();
-    for (; it != Node::symtable->symTable.rend(); ++it) {
-      map<string, SymbolTable::DeclAssoc> currMap = *it;
-      if(currMap.find(s) != currMap.end()) {
-        //cerr << "PostFix::finding value from symtable!!" << endl;
-        value = currMap.find(s)->second.value;
-        break;
-      }
-    }
-
-    if(type == irgen->GetIntType()) {
-      if(this->op->IsOp("-")) {
-        binaryOp = llvm::BinaryOperator::CreateSub(lhs, rhs, "", irgen->GetBasicBlock());
-      }
-      else if(this->op->IsOp("+")) {
-        binaryOp = llvm::BinaryOperator::CreateAdd(lhs, rhs, "", irgen->GetBasicBlock());
-      }
-      else if(this->op->IsOp("*")) {
-        binaryOp = llvm::BinaryOperator::CreateMul(lhs, rhs, "", irgen->GetBasicBlock());
-      }
-      else if(this->op->IsOp("/")) {
-        binaryOp = llvm::BinaryOperator::CreateSDiv(lhs, rhs, "", irgen->GetBasicBlock());
-      }
-    }
-    else if(type == irgen->GetFloatType()) {
-      if(this->op->IsOp("-")) {
-        binaryOp = llvm::BinaryOperator::CreateFSub(lhs, rhs, "", irgen->GetBasicBlock());
-      }
-      else if(this->op->IsOp("+")) {
-        binaryOp = llvm::BinaryOperator::CreateFAdd(lhs, rhs, "", irgen->GetBasicBlock());
-      }
-      else if(this->op->IsOp("*")) {
-        binaryOp = llvm::BinaryOperator::CreateFMul(lhs, rhs, "", irgen->GetBasicBlock());
-      }
-      else if(this->op->IsOp("/")) {
-        binaryOp = llvm::BinaryOperator::CreateFDiv(lhs, rhs, "", irgen->GetBasicBlock());
-      }
-    }
-  }
-
-  new llvm::StoreInst(binaryOp, value, irgen->GetBasicBlock());
-  return new llvm::LoadInst(value, "", irgen->GetBasicBlock());
+  cerr << "Reached end of procedure with no result." << endl;
+  return NULL;
 }
 
 void ArrayAccess::PrintChildren(int indentLevel) {
@@ -302,7 +415,7 @@ llvm::Value *LogicalExpr::Emit() {
 }
 
 llvm::Value *AssignExpr::Emit() {
-  cerr << "AssignExpr called" << endl;
+  cerr << "[DEBUG] AssignExpr::Emit()" << endl;
   VarExpr *lhsVar = dynamic_cast<VarExpr *>(left);
   llvm::Value *rhs = right->Emit();
 
@@ -384,7 +497,31 @@ llvm::Value *PostfixExpr::Emit() {
 }
 
 llvm::Value *FieldAccess::Emit() {
-  // TODO Help
+  cerr << "[FieldAccess] FieldAccess::Emit()" << endl;
+  llvm::Value *fieldBase = this->base->Emit();
+  string fieldName = this->field->GetName();
+  if(fieldName.size() == 1) {
+    cerr << "[FieldAccess] Field is length one" << endl;
+    if(fieldName == "x") {
+      return llvm::ExtractElementInst::Create(fieldBase, llvm::ConstantInt::get(irgen->GetIntType(), 0), "", irgen->GetBasicBlock());
+    } else if(fieldName == "y") {
+      return llvm::ExtractElementInst::Create(fieldBase, llvm::ConstantInt::get(irgen->GetIntType(), 1), "", irgen->GetBasicBlock());
+    } else if(fieldName == "z") {
+      return llvm::ExtractElementInst::Create(fieldBase, llvm::ConstantInt::get(irgen->GetIntType(), 2), "", irgen->GetBasicBlock());
+    } else if(fieldName == "w") {
+      return llvm::ExtractElementInst::Create(fieldBase, llvm::ConstantInt::get(irgen->GetIntType(), 3), "", irgen->GetBasicBlock());
+    }
+  } else if(fieldName.size() == 2) {
+    cerr << "[FieldAccess] Field is length two" << endl;
+  } else if(fieldName.size() == 3) {
+    cerr << "[FieldAccess] Field is length three" << endl;
+  } else if(fieldName.size() == 4) {
+    cerr << "[FieldAccess] Field is length four" << endl;
+  } else if(fieldName.size() >= 5) {
+    cerr << "[FieldAccess] Field length is oversized." << endl;
+  }
+  cerr << "[FieldAccess] Reached end of FieldAccess." << endl;
+  return NULL;
 }
 
 llvm::Value *RelationalExpr::Emit() {

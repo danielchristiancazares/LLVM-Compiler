@@ -87,6 +87,7 @@ llvm::Value *StmtBlock::Emit() {
     Delete  scope
   */
   // get formals for local variables
+  cerr << "[Global::StmtBlock] StmtBlock::EmitFromFunc()" << endl;
   map <string, SymbolTable::DeclAssoc> newScope;
   Node::symtable->symTable.push_back(newScope);
   for (int i = 0; i < this->stmts->NumElements(); i++) {
@@ -98,10 +99,8 @@ llvm::Value *StmtBlock::Emit() {
   for(; it != Node::symtable->symTable.end(); it++) {
     map<string, SymbolTable::DeclAssoc> currMap = *it;
     for(map<string, SymbolTable::DeclAssoc>::iterator it2 = currMap.begin(); it2 != currMap.end(); it2++) {
-      ////cerr << "The string is " << it2->first << endl;
-      ////cerr << "THe value of this string is " << it2->second.value << endl;
+      cerr << "[Global::StmtBlock] String: " << it2->first << ", Value: " << it2->second.value << endl;
     }
-    ////cerr << "   NEW   MAP    " << endl;
   }
   Node::symtable->symTable.pop_back();
 
@@ -109,11 +108,8 @@ llvm::Value *StmtBlock::Emit() {
 }
 
 llvm::Value *StmtBlock::EmitFromFunc() {
-  
-  // get formals for local variables
-  //cerr << "StmtBlock:: EmitFromFunc" << endl;
-  //cerr << "Vector size is " << Node::symtable->symTable.size() << endl;
-  //cerr << "Number of statements is " << this->stmts->NumElements() << endl;
+  cerr << "[FnDecl::StmtBlock] StmtBlock::EmitFromFunc()" << endl;
+
   for (int i = 0; i < this->stmts->NumElements(); i++) {
     Stmt *s = this->stmts->Nth(i);
     s->Emit();
@@ -123,10 +119,8 @@ llvm::Value *StmtBlock::EmitFromFunc() {
   for(; it != Node::symtable->symTable.end(); it++) {
     map<string, SymbolTable::DeclAssoc> currMap = *it;
     for(map<string, SymbolTable::DeclAssoc>::iterator it2 = currMap.begin(); it2 != currMap.end(); it2++) {
-      ////cerr << "The string is " << it2->first << endl;
-      ////cerr << "THe value of this string is " << it2->second.value << endl;
+      cerr << "[FnDecl::StmtBlock] String: " << it2->first << ", Value: " << it2->second.value << endl;
     }
-    ////cerr << "   NEW   MAP    " << endl;
   }
   Node::symtable->symTable.pop_back();
 
@@ -187,7 +181,7 @@ llvm::Value *ForStmt::Emit() {
   llvm::BasicBlock *bodyBB = llvm::BasicBlock::Create(*context, "bodyBB", irgen->GetFunction());
   llvm::BasicBlock *stepBB = llvm::BasicBlock::Create(*context, "stepBB", irgen->GetFunction());
   llvm::BasicBlock *footerBB = llvm::BasicBlock::Create(*context, "footerBB", irgen->GetFunction());
-  
+
   llvm::BranchInst::Create(next, irgen->GetBasicBlock());
   irgen->SetBasicBlock(next);
   // emit init
@@ -397,6 +391,8 @@ void SwitchStmt::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *SwitchStmt::Emit() {
+  llvm::LLVMContext *context = irgen->GetContext();
+  llvm::Function *function = irgen->GetFunction();
   //TODO OMG What do here
   /*
     Find  all the cases /default  case  and create  BB  for each  of  them
@@ -522,15 +518,12 @@ llvm::Value *Default::Emit() {
 }
 
 llvm::Value *BreakStmt::Emit() {
-  //TODO Create a BasicBlock within SwitchStmt to declare whether or not
-  //TODO to exit.
   llvm::BranchInst::Create (Node::breakStack->back(), irgen->GetBasicBlock ());
   irgen->SetBasicBlock(Node::breakStack->back());
   return NULL;
 }
 
 llvm::Value *ContinueStmt::Emit() {
-  //TODO Same as above.
   llvm::BranchInst::Create (Node::continueStack->back(), irgen->GetBasicBlock ());
   irgen->SetBasicBlock(Node::continueStack->back());
   return NULL;
