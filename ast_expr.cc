@@ -431,29 +431,49 @@ llvm::Value *AssignExpr::Emit() {
     }
   }
 
+  llvm::Type *type = lhs->getType();
+
   if(this->op->IsOp("=")) {
     cerr << "[AssignExpr] '=' is the Op" << endl;
     return new llvm::StoreInst(right->Emit(), lhs, irgen->GetBasicBlock());
   } 
   else if(this->op->IsOp("*=")) {
-    cerr << "[AssignExpr] '*' is the Op" << endl;
-    llvm::Type *type = lhs->getType();
+    cerr << "[AssignExpr] '*=' is the Op" << endl;
     if(type == irgen->GetFloatType()) {
-      binaryOp = llvm::BinaryOperator::CreateFMul(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
+      binaryOp = llvm::BinaryOperator::CreateFMul(left->Emit(), right->Emit(), "mulFAssign", irgen->GetBasicBlock());
     } 
     else {
-      binaryOp = llvm::BinaryOperator::CreateMul(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
+      binaryOp = llvm::BinaryOperator::CreateMul(left->Emit(), right->Emit(), "mulAssign", irgen->GetBasicBlock());
     }
     return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
   } 
   else if(this->op->IsOp("+=")) {
-    cerr << "[AssignExpr] '+' is the Op" << endl;
-    llvm::Type *type = lhs->getType();
+    cerr << "[AssignExpr] '+=' is the Op" << endl;
     if(type == irgen->GetFloatType()) {
-      binaryOp = llvm::BinaryOperator::CreateFAdd(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
+      binaryOp = llvm::BinaryOperator::CreateFAdd(left->Emit(), right->Emit(), "addFAssign", irgen->GetBasicBlock());
     } 
     else {
-      binaryOp = llvm::BinaryOperator::CreateAdd(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
+      binaryOp = llvm::BinaryOperator::CreateAdd(left->Emit(), right->Emit(), "addAssign", irgen->GetBasicBlock());
+    }
+    return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
+  }
+  else if(this->op->IsOp("-=")) {
+    cerr << "[AssignExpr] '-=' is the Op" << endl;
+    if(type == irgen->GetFloatType()) {
+      binaryOp = llvm::BinaryOperator::CreateFSub(left->Emit(), right->Emit(), "subFAssign", irgen->GetBasicBlock());
+    } 
+    else {
+      binaryOp = llvm::BinaryOperator::CreateSub(left->Emit(), right->Emit(), "subAssign", irgen->GetBasicBlock());
+    }
+    return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
+  }
+  else if(this->op->IsOp("/=")) {
+    cerr << "[AssignExpr] '/=' is the Op" << endl;
+    if(type == irgen->GetFloatType()) {
+      binaryOp = llvm::BinaryOperator::CreateFDiv(left->Emit(), right->Emit(), "divFAssign", irgen->GetBasicBlock());
+    } 
+    else {
+      binaryOp = llvm::BinaryOperator::CreateSDiv(left->Emit(), right->Emit(), "divAssign", irgen->GetBasicBlock());
     }
     return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
   }
