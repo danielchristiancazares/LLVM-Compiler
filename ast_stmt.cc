@@ -391,8 +391,6 @@ void SwitchStmt::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *SwitchStmt::Emit() {
-  llvm::LLVMContext *context = irgen->GetContext();
-  llvm::Function *function = irgen->GetFunction();
   //TODO OMG What do here
   /*
     Find  all the cases /default  case  and create  BB  for each  of  them
