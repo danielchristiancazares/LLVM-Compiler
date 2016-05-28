@@ -415,9 +415,15 @@ llvm::Value *LogicalExpr::Emit() {
 }
 
 llvm::Value *AssignExpr::Emit() {
-  cerr << "[DEBUG] AssignExpr::Emit()" << endl;
+  cerr << "[AssignExpr] AssignExpr::Emit()" << endl;
   VarExpr *lhsVar = dynamic_cast<VarExpr *>(left);
   llvm::Value* binaryOp = NULL;
+  if(lhsVar) {
+    cerr << "[AssignExpr] LHS casted to VarExpr" << endl;
+  } else {
+    lhsVar = dynamic_cast<FieldAccess *>(left);
+    cerr << "[AssignExpr] LHS casted to FieldAccess" << endl;
+  }
   //llvm::Value *rhs = right->Emit();
 
   llvm::Value *lhs = NULL;
