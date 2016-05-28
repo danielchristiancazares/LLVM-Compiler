@@ -67,6 +67,7 @@ llvm::Value *VarDecl::Emit() {
   if(Node::symtable->symTable.empty()) {
     cerr << "[VarDecl] SymbolTable Empty" << endl;
     map <string, SymbolTable::DeclAssoc> newMap;
+    cerr << "[VarDecl] Global variable is being created" << endl;
     value = new llvm::GlobalVariable(*mod, type, false, llvm::GlobalValue::ExternalLinkage, constant, name);
     declassoc.value = value;
     declassoc.decl = this;
@@ -172,7 +173,7 @@ llvm::Value *FnDecl::Emit() {
   for (int i = 0; i < this->formals->NumElements(); i++) {
     //cerr << "Populing the formals2" << endl;
     VarDecl *v = this->formals->Nth(i);
-    v->Emit();
+    //v->Emit();
     argName = v->GetIdentifier()->GetName();
     // set the name
     it->setName(argName);
