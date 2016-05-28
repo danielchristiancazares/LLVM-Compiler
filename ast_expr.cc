@@ -415,9 +415,16 @@ llvm::Value *LogicalExpr::Emit() {
 }
 
 llvm::Value *AssignExpr::Emit() {
-  cerr << "[DEBUG] AssignExpr::Emit()" << endl;
+  cerr << "[AssignExpr] AssignExpr::Emit()" << endl;
   VarExpr *lhsVar = dynamic_cast<VarExpr *>(left);
-  llvm::Value *rhs = right->Emit();
+  if(lhsVar) {
+    cerr << "[AssignExpr] LHS casted to VarExpr" << endl;
+  } else {
+    lhsVar = dynamic_cast<FieldAccess *>(left);
+    cerr << "[AssignExpr] LHS casted to FieldAccess" << endl;
+  }
+  llvm::Value *binaryOp = NULL;
+  //llvm::Value *rhs = right->Emit();
 
   llvm::Value *lhs = NULL;
   string s = lhsVar->GetIdentifier()->GetName();
@@ -431,28 +438,32 @@ llvm::Value *AssignExpr::Emit() {
   }
 
   if(this->op->IsOp("=")) {
-    return new llvm::StoreInst(rhs, lhs, irgen->GetBasicBlock());
-  } else if(this->op->IsOp("*=")) {
-    cerr << "Mul assign is called" << endl;
-    llvm::Type *type = rhs->getType();
-    llvm::Value *rhsMult = NULL;
+    cerr << "[AssignExpr] '=' is the Op" << endl;
+    return new llvm::StoreInst(right->Emit(), lhs, irgen->GetBasicBlock());
+  } 
+  else if(this->op->IsOp("*=")) {
+    cerr << "[AssignExpr] '*' is the Op" << endl;
+    llvm::Type *type = lhs->getType();
     if(type == irgen->GetFloatType()) {
-      rhsMult = llvm::BinaryOperator::CreateFMul(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
-    } else {
-      rhsMult = llvm::BinaryOperator::CreateMul(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
+      binaryOp = llvm::BinaryOperator::CreateFMul(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
+    } 
+    else {
+      binaryOp = llvm::BinaryOperator::CreateMul(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
     }
-    return new llvm::StoreInst(rhsMult, lhs, irgen->GetBasicBlock());
-  } else if(this->op->IsOp("+=")) {
-    cerr << "Plus assign is called" << endl;
-    llvm::Type *type = rhs->getType();
-    llvm::Value *rhsAdd = NULL;
+    return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
+  } 
+  else if(this->op->IsOp("+=")) {
+    cerr << "[AssignExpr] '+' is the Op" << endl;
+    llvm::Type *type = lhs->getType();
     if(type == irgen->GetFloatType()) {
-      rhsAdd = llvm::BinaryOperator::CreateFAdd(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
-    } else {
-      rhsAdd = llvm::BinaryOperator::CreateAdd(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
+      binaryOp = llvm::BinaryOperator::CreateFAdd(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
+    } 
+    else {
+      binaryOp = llvm::BinaryOperator::CreateAdd(left->Emit(), right->Emit(), "", irgen->GetBasicBlock());
     }
-    return new llvm::StoreInst(rhsAdd, lhs, irgen->GetBasicBlock());
+    return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
   }
+
   return NULL;
 }
 
