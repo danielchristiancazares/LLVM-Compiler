@@ -463,6 +463,7 @@ llvm::Value* FieldAccess::getPointer() {
 llvm::Value *AssignExpr::Emit() {
   cerr << "[AssignExpr] AssignExpr::Emit()" << endl;
   llvm::Value *lhs = NULL;
+  llvm::FieldAccess* lhsFieldAccess = NULL;
   llvm::Value *retVal = NULL;
   VarExpr *lhsVar = dynamic_cast<VarExpr *>(left);
   llvm::Value* binaryOp = NULL;
@@ -472,10 +473,8 @@ llvm::Value *AssignExpr::Emit() {
     lhs = llvm::cast<llvm::LoadInst>(lhs)->getPointerOperand();
   }
   else if(dynamic_cast<FieldAccess*>(left)) {
-    cerr << "[AssignExpr] LHS casted to FieldAccess" << endl;
-    FieldAccess* lhsFieldAccess = dynamic_cast<FieldAccess *>(left);
+    lhsFieldAccess = dynamic_cast<FieldAccess *>(left);
     lhs = new llvm::LoadInst(lhsFieldAccess->getPointer(), "FieldAccessed", irgen->GetBasicBlock());
-    cerr << "[AssignExpr] LHS Pointer Address found!?" << endl;
   }
   else if(dynamic_cast<ArrayAccess*>(left)) {
     cerr << "[AssignExpr] LHS ArrayAccess" << endl;
@@ -488,6 +487,10 @@ llvm::Value *AssignExpr::Emit() {
   llvm::Type *type = lhs->getType();
   if(this->op->IsOp("=")) {
     cerr << "[AssignExpr] Simple Assignment is the Op" << endl;
+    if(lhsFieldAcces) {
+      cerr << "[AssignExpr] Extracting each element from swizzle index." << endl;
+      llvm::C
+    }
     retVal = this->right->Emit();
     new llvm::StoreInst(retVal, lhs, irgen->GetBasicBlock());
     return retVal;
