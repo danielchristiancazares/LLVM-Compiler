@@ -220,7 +220,7 @@ class Call : public Expr {
   Call(yyltype loc, Expr *base, Identifier *field, List<Expr *> *args);
   const char *GetPrintNameForNode() { return "Call"; }
   void PrintChildren(int indentLevel);
-  llvm::Value *Emit() { return NULL; }
+  llvm::Value *Emit();
 };
 
 class ActualsError : public Call {

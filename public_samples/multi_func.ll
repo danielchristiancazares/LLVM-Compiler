@@ -8,9 +8,9 @@ define float @foo(float %a) {
 foo:
   %a1 = alloca float
   store float %a, float* %a1
-  %v = load <2 x float>* @v
-  %0 = extractelement <2 x float> %v, i32 0
-  %a2 = load float* %a1
+  %0 = load <2 x float>* @v
+  %1 = extractelement <2 x float> %0, i32 0
+  %2 = load float* %a1
   ret void
 }
 
@@ -20,23 +20,23 @@ bar:
   store i32 %a, i32* %a1
   %t = alloca float
   store float 0.000000e+00, float* %t
-  %a2 = load i32* %a1
-  %0 = icmp sgt i32 %a2, 1
-  br i1 %0, label %IFthenBB, label %IFelseBB
+  %0 = load i32* %a1
+  %1 = icmp sgt i32 %0, 1
+  br i1 %1, label %IFthenBB, label %IFelseBB
 
 IFthenBB:                                         ; preds = %bar
-  %t3 = load float* %t
-  %v = load <2 x float>* @v
-  %1 = extractelement <2 x float> %v, i32 1
-  store float %1, float* %t
+  %2 = load float* %t
+  %3 = load <2 x float>* @v
+  %4 = extractelement <2 x float> %3, i32 1
+  store float %4, float* %t
   br label %IFfooterBB
 
 IFelseBB:                                         ; preds = %bar
-  %t4 = load float* %t
+  %5 = load float* %t
   store float 2.500000e-01, float* %t
   br label %IFfooterBB
 
 IFfooterBB:                                       ; preds = %IFelseBB, %IFthenBB
-  %t5 = load float* %t
-  ret float %t5
+  %6 = load float* %t
+  ret float %6
 }
