@@ -566,6 +566,7 @@ llvm::Value *FieldAccess::Emit() {
   string fieldName = this->field->GetName();
   cerr << "[FieldAccess] Base: " << this->base << "." << fieldName << endl;
   if(fieldName.size() == 1) {
+    // Should evaluate to a floating point number
     cerr << "[FieldAccess] Field is length one" << endl;
     if(fieldName == "x") {
       return llvm::ExtractElementInst::Create(fieldBase, llvm::ConstantInt::get(irgen->GetIntType(), 0), "", irgen->GetBasicBlock());
@@ -577,13 +578,19 @@ llvm::Value *FieldAccess::Emit() {
       return llvm::ExtractElementInst::Create(fieldBase, llvm::ConstantInt::get(irgen->GetIntType(), 3), "", irgen->GetBasicBlock());
     }
   } else if(fieldName.size() == 2) {
+    // Should evaluate to a vec2
     cerr << "[FieldAccess] Field is length two" << endl;
-
+    llvm::ArrayRef<llvm::Constant *> swizzleArray(argTypes);
+    llvm::Constant* vectorConstant = llvm::ConstantVector::get(swizzleArray);
+    return new llvm::ShuffleVectorInst(fieldBase, llvm::UndefValue::get(fieldBase->getType()), vectorConstant, "", irgen->GetBasicBlock());
   } else if(fieldName.size() == 3) {
+    // Should evaluate to a vec3
     cerr << "[FieldAccess] Field is length three" << endl;
   } else if(fieldName.size() == 4) {
+    // Should evaluate to a vec2
     cerr << "[FieldAccess] Field is length four" << endl;
   } else if(fieldName.size() >= 5) {
+    // Should not evaluate
     cerr << "[FieldAccess] Field length is oversized." << endl;
   }
   cerr << "[FieldAccess] Reached end of FieldAccess." << endl;
