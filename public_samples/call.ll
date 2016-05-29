@@ -22,6 +22,7 @@ define float @main() {
 main:
   %x = alloca float
   store float 0.000000e+00, float* %x
+  %x1 = load float* %x
   store float 6.000000e+00, float* %x
   ret void
 }

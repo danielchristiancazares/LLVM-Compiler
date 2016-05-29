@@ -25,16 +25,18 @@ bar:
   br i1 %0, label %IFthenBB, label %IFelseBB
 
 IFthenBB:                                         ; preds = %bar
+  %t3 = load float* %t
   %v = load <2 x float>* @v
   %1 = extractelement <2 x float> %v, i32 1
   store float %1, float* %t
   br label %IFfooterBB
 
 IFelseBB:                                         ; preds = %bar
+  %t4 = load float* %t
   store float 2.500000e-01, float* %t
   br label %IFfooterBB
 
 IFfooterBB:                                       ; preds = %IFelseBB, %IFthenBB
-  %t3 = load float* %t
-  ret float %t3
+  %t5 = load float* %t
+  ret float %t5
 }
