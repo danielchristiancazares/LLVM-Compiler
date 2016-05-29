@@ -54,6 +54,7 @@ void VarExpr::PrintChildren(int indentLevel) {
 llvm::Value *VarExpr::Emit() {
   cerr << "[DEBUG] VarExpr::Emit()" << endl;
   llvm::Value *value = NULL;
+  llvm::Module *mod = irgen->GetOrCreateModule("irgen.bc");
   string s = this->GetIdentifier()->GetName();
   vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = Node::symtable->symTable.rbegin();
   for (; it != Node::symtable->symTable.rend(); ++it) {
@@ -63,7 +64,7 @@ llvm::Value *VarExpr::Emit() {
       value = currMap.find(s)->second.value;
       cerr << "[DEBUG] Identifier: " << this->GetIdentifier()->GetName() << ", Value: " << value << endl;
       llvm::Twine *twine = new llvm::Twine(this->GetIdentifier()->GetName());
-      return new llvm::LoadInst(value, *twine, irgen->GetBasicBlock());
+      return new llvm::LoadInst(value, "", irgen->GetBasicBlock());
     }
   }
   return NULL;
@@ -716,4 +717,39 @@ llvm::Value *RelationalExpr::Emit() {
     }
   }
   return NULL;
+}
+
+llvm::Value *Call::Emit() {
+  cerr << "[Call] Emit is being called" << endl;
+  /*
+    Used for "Call" expression
+    Func should be the address of the function
+    Args is an ArrayRef<Value*> of the Actuals LLVM::Value
+    llvm::CallInst::Create( Value *Func, ArrayRef<Value*> Args, const Twine &NameStr, BasicBlock *InsertAtEnd );
+  */
+  llvm::Function *f = NULL;
+  string s = this->field->GetName();
+  vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = this->symtable->symTable.rbegin();
+  for (; it != this->symtable->symTable.rend() && f == NULL; ++it) {
+    map<string, SymbolTable::DeclAssoc> currMap = *it;
+    if(currMap.find(s) != currMap.end()) {
+      if(!llvm::cast<llvm::Function>((currMap.find(s)->second.value))) {
+        cerr << "[Call] Function was not found" << endl;
+      }
+      cerr << "[Call] Found the function!" << endl;
+      f = llvm::cast<llvm::Function>(currMap.find(s)->second.value);
+      break;
+    }
+  }
+
+  vector<llvm::Value*> actualStack;
+  for(int i = 0; i < this->actuals->NumElements(); i++) {
+    cerr << "[Call] Actuals are being populated: " << i << endl;
+    llvm::Value* temp = this->actuals->Nth(i)->Emit();
+    actualStack.push_back(temp);
+  }
+
+  llvm::ArrayRef<llvm::Value*> arrayOfActuals(actualStack);
+  llvm::Value* value = llvm::CallInst::Create(f, arrayOfActuals, "FunctionCall", irgen->GetBasicBlock());
+  return value;
 }

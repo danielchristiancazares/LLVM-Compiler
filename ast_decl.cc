@@ -250,7 +250,7 @@ llvm::Value *FnDecl::Emit() {
     declassoc.decl = v;
     declassoc.isGlobal = false;
     newScope.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
-    it++;
+    arg++;
   }
   // pushing new scope
   Node::symtable->symTable.push_back(newScope);
