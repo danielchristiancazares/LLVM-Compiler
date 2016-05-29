@@ -448,9 +448,11 @@ llvm::Value *LogicalExpr::Emit() {
 llvm::Value *AssignExpr::Emit() {
   cerr << "[AssignExpr] AssignExpr::Emit()" << endl;
   llvm::Value *lhs = NULL;
+  llvm::Value *retVal = NULL;
   VarExpr *lhsVar = dynamic_cast<VarExpr *>(left);
   llvm::Value* binaryOp = NULL;
   if(lhsVar) {
+    /*
     cerr << "[AssignExpr] LHS casted to VarExpr" << endl;
     string s = lhsVar->GetIdentifier()->GetName();
     vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = this->symtable->symTable.rbegin();
@@ -461,60 +463,99 @@ llvm::Value *AssignExpr::Emit() {
         break;
       }
     }
-  } else {
+    */
+    lhs = this->left->Emit();
+    lhs = llvm::cast<llvm::LoadInst>(lhs)->getPointerOperand();
+  }
+  else if(dynamic_cast<FieldAccess*>(left)) {
     cerr << "[AssignExpr] LHS casted to FieldAccess" << endl;
     FieldAccess* lhsFieldAccess = dynamic_cast<FieldAccess *>(left);
     lhs = lhsFieldAccess->Emit();
     cerr << "[AssignExpr] LHS Post-FieldAccess-Emit" << endl;
   }
+  else if(dynamic_cast<ArrayAccess*>(left)) {
+    cerr << "[AssignExpr] LHS ArrayAccess" << endl;
+    if(lhs == NULL) {
+      cerr << "[AssignExpr] Houston we have a problem" << endl;
+    }
+    lhs = dynamic_cast<ArrayAccess*>(left)->Emit();
+    lhs = llvm::cast<llvm::LoadInst>(lhs)->getPointerOperand();
+  }
 
   cerr << "[AssignExpr] Found identifier." << endl;
-  llvm::Type *type = lhs->getType();
+=======
+  //llvm::Value *rhs = right->Emit();
 
+  llvm::Value *lhs = NULL;
+  string s = lhsVar->GetIdentifier()->GetName();
+  vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = this->symtable->symTable.rbegin();
+  for (; it != this->symtable->symTable.rend() && lhs == NULL; ++it) {
+    map<string, SymbolTable::DeclAssoc> currMap = *it;
+    if(currMap.find(s) != currMap.end()) {
+      lhs = currMap.find(s)->second.value;
+      break;
+    }
+  }
+
+  llvm::Type *type = lhs->getType();
   if(this->op->IsOp("=")) {
     cerr << "[AssignExpr] Simple Assignment is the Op" << endl;
-    return new llvm::StoreInst(right->Emit(), lhs, irgen->GetBasicBlock());
+    //return new llvm::StoreInst(right->Emit(), lhs, irgen->GetBasicBlock());
+    retVal = this->right->Emit();
+    new llvm::StoreInst(retVal, lhs, irgen->GetBasicBlock());
+    return retVal;
   } 
   else if(this->op->IsOp("*=")) {
     cerr << "[AssignExpr] Multiplication is the Op" << endl;
-    llvm::Type *type = lhs->getType();
+    retVal = this->right->Emit();
     if(type == irgen->GetFloatType()) {
-      binaryOp = llvm::BinaryOperator::CreateFMul(left->Emit(), right->Emit(), "mulFAssign", irgen->GetBasicBlock());
+      binaryOp = llvm::BinaryOperator::CreateFMul(left->Emit(), retVal, "mulFAssign", irgen->GetBasicBlock());
     } 
     else {
-      binaryOp = llvm::BinaryOperator::CreateMul(left->Emit(), right->Emit(), "mulAssign", irgen->GetBasicBlock());
+      binaryOp = llvm::BinaryOperator::CreateMul(left->Emit(), retVal, "mulAssign", irgen->GetBasicBlock());
     }
-    return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
+    new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
+    return retVal;
+    //return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
   }
   else if(this->op->IsOp("+=")) {
     cerr << "[AssignExpr] '+=' is the Op" << endl;
+    retVal = this->right->Emit();
     if(type == irgen->GetFloatType()) {
-      binaryOp = llvm::BinaryOperator::CreateFAdd(left->Emit(), right->Emit(), "addFAssign", irgen->GetBasicBlock());
+      binaryOp = llvm::BinaryOperator::CreateFAdd(left->Emit(), retVal, "addFAssign", irgen->GetBasicBlock());
     } 
     else {
-      binaryOp = llvm::BinaryOperator::CreateAdd(left->Emit(), right->Emit(), "addAssign", irgen->GetBasicBlock());
+      binaryOp = llvm::BinaryOperator::CreateAdd(left->Emit(), retVal, "addAssign", irgen->GetBasicBlock());
     }
-    return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
+    //return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
+    new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
+    return retVal;
   }
   else if(this->op->IsOp("-=")) {
     cerr << "[AssignExpr] '-=' is the Op" << endl;
+    retVal = this->right->Emit();
     if(type == irgen->GetFloatType()) {
-      binaryOp = llvm::BinaryOperator::CreateFSub(left->Emit(), right->Emit(), "subFAssign", irgen->GetBasicBlock());
+      binaryOp = llvm::BinaryOperator::CreateFSub(left->Emit(), retVal, "subFAssign", irgen->GetBasicBlock());
     }
     else {
-      binaryOp = llvm::BinaryOperator::CreateSub(left->Emit(), right->Emit(), "subAssign", irgen->GetBasicBlock());
+      binaryOp = llvm::BinaryOperator::CreateSub(left->Emit(), retVal, "subAssign", irgen->GetBasicBlock());
     }
-    return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
+    //return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
+    new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
+    return retVal;
   }
   else if(this->op->IsOp("/=")) {
     cerr << "[AssignExpr] '/=' is the Op" << endl;
+    retVal = this->right->Emit();
     if(type == irgen->GetFloatType()) {
-      binaryOp = llvm::BinaryOperator::CreateFDiv(left->Emit(), right->Emit(), "divFAssign", irgen->GetBasicBlock());
+      binaryOp = llvm::BinaryOperator::CreateFDiv(left->Emit(), retVal, "divFAssign", irgen->GetBasicBlock());
     }
     else {
-      binaryOp = llvm::BinaryOperator::CreateSDiv(left->Emit(), right->Emit(), "divAssign", irgen->GetBasicBlock());
+      binaryOp = llvm::BinaryOperator::CreateSDiv(left->Emit(), retVal, "divAssign", irgen->GetBasicBlock());
     }
-    return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
+    //return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
+    new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
+    return retVal;
   }
 
   return NULL;
@@ -558,6 +599,27 @@ llvm::Value *PostfixExpr::Emit() {
   }
   new llvm::StoreInst(binaryOp, value, irgen->GetBasicBlock());
   return lhs;
+}
+
+llvm::Value *ArrayAccess::Emit() {
+  cerr << "[ArrayAccess] Emit is being called" << endl;
+  /*
+  // Ptr should be address of the base
+  // IdxList should be an ArrayRef<Value*> where the first element is a llvm::ConstantInt(0) and
+  // the second element is the llvm:: corresponding to the subscript
+  llvm::GetElementPtrInst::Create(Value *Ptr, ArrayRef<Value*> IdxList, const Twine &NameStr, BasicBlock *InsertAtEnd);
+  */
+  vector<llvm::Value*> arrayVal;
+  arrayVal.push_back(llvm::ConstantInt::get(irgen->GetIntType(), 0));
+  llvm::Value* arraySubscript = this->subscript->Emit();
+  arrayVal.push_back(arraySubscript);
+  llvm::Value* arrBase = this->base->Emit();
+  llvm::Value* baseAddress = llvm::cast<llvm::LoadInst>(arrBase)->getPointerOperand();
+  llvm::ArrayRef<llvm::Value*> arrayOffset(arrayVal);
+  cerr << "[ArrayAccess] This is where it segfaults" << endl;
+  llvm::Value* value = llvm::GetElementPtrInst::Create(baseAddress, arrayOffset, "ArrayAccess", irgen->GetBasicBlock());
+  return new llvm::LoadInst(value, "ArrayAccessed", irgen->GetBasicBlock());
+  //return value;
 }
 
 llvm::Value *FieldAccess::Emit() {

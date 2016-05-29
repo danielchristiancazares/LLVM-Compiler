@@ -348,13 +348,14 @@ void ReturnStmt::PrintChildren(int indentLevel) {
 
 llvm::Value *ReturnStmt::Emit() {
   // TODO Check the expression and perform something depending on that?
-  //cerr << "ReturnEmit called" << endl;
+  cerr << "[ReturnStmt] Emit is called" << endl;
   llvm::LLVMContext *context = irgen->GetContext();
   llvm::Value *val;
   if (this->expr != NULL) {
     val = this->expr->Emit();
     ////cerr << "expr is not null" << endl;
     ////cerr << "return type is " << val << endl;
+    //cerr << "[ReturnStmt] Value returned is " << val << " with type " << val->getType() << endl;
     llvm::ReturnInst::Create(*context, val, irgen->GetBasicBlock());
   }
   else {
