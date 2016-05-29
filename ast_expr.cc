@@ -239,6 +239,22 @@ llvm::Value *ArithmeticExpr::Emit() {
         return llvm::BinaryOperator::CreateSDiv(lhs, rhs, "", irgen->GetBasicBlock());
       }
     }
+    else if(type == irgen->GetFloatType()) {
+      if(this->op->IsOp("-")) {
+        cerr << "[ArithmeticExpr] Returning float subtraction BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateFSub(lhs, rhs, "", irgen->GetBasicBlock());
+      } else if(this->op->IsOp("+")) {
+        cerr << "[ArithmeticExpr] Returning float addition BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateFAdd(lhs, rhs, "", irgen->GetBasicBlock());
+      } else if(this->op->IsOp("*")) {
+        cerr << "[ArithmeticExpr] Returning float multiplication BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateFMul(lhs, rhs, "", irgen->GetBasicBlock());
+      } else if(this->op->IsOp("/")) {
+        cerr << "[ArithmeticExpr] Returning float division BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateFDiv(lhs, rhs, "", irgen->GetBasicBlock());
+      }
+    }
+
   } else if(!lhsFieldAccess && rhsFieldAccess) {
     cerr << "[ArithmeticExpr] Only right operand is of FieldAccess type." << endl;
     if(type == irgen->GetIntType()) {
@@ -255,6 +271,21 @@ llvm::Value *ArithmeticExpr::Emit() {
       } else if(this->op->IsOp("/")) {
         cerr << "[ArithmeticExpr] Returning int division BinaryOperator." << endl;
         return llvm::BinaryOperator::CreateSDiv(lhs, rhs, "", irgen->GetBasicBlock());
+      }
+    }
+    else if(type == irgen->GetFloatType()) {
+      if(this->op->IsOp("-")) {
+        cerr << "[ArithmeticExpr] Returning float subtraction BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateFSub(lhs, rhs, "", irgen->GetBasicBlock());
+      } else if(this->op->IsOp("+")) {
+        cerr << "[ArithmeticExpr] Returning float addition BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateFAdd(lhs, rhs, "", irgen->GetBasicBlock());
+      } else if(this->op->IsOp("*")) {
+        cerr << "[ArithmeticExpr] Returning float multiplication BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateFMul(lhs, rhs, "", irgen->GetBasicBlock());
+      } else if(this->op->IsOp("/")) {
+        cerr << "[ArithmeticExpr] Returning float division BinaryOperator." << endl;
+        return llvm::BinaryOperator::CreateFDiv(lhs, rhs, "", irgen->GetBasicBlock());
       }
     }
   } else if(!lhsFieldAccess && !rhsFieldAccess) {
@@ -415,33 +446,36 @@ llvm::Value *LogicalExpr::Emit() {
   return NULL;
 }
 
+llvm::Value* FieldAccess::getPointer() {
+  llvm::Value* lhs = NULL;
+  VarExpr *lhsVar = dynamic_cast<VarExpr *>(this->base);
+  string s = lhsVar->GetIdentifier()->GetName();
+  vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = this->symtable->symTable.rbegin();
+  for (; it != this->symtable->symTable.rend() && lhs == NULL; ++it) {
+    map<string, SymbolTable::DeclAssoc> currMap = *it;
+    if(currMap.find(s) != currMap.end()) {
+      lhs = currMap.find(s)->second.value;
+      break;
+    }
+  }
+  return lhs;
+}
+
 llvm::Value *AssignExpr::Emit() {
   cerr << "[AssignExpr] AssignExpr::Emit()" << endl;
   llvm::Value *lhs = NULL;
+  llvm::FieldAccess* lhsFieldAccess = NULL;
   llvm::Value *retVal = NULL;
   VarExpr *lhsVar = dynamic_cast<VarExpr *>(left);
   llvm::Value* binaryOp = NULL;
   if(lhsVar) {
-    /*
     cerr << "[AssignExpr] LHS casted to VarExpr" << endl;
-    string s = lhsVar->GetIdentifier()->GetName();
-    vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = this->symtable->symTable.rbegin();
-    for (; it != this->symtable->symTable.rend() && lhs == NULL; ++it) {
-      map<string, SymbolTable::DeclAssoc> currMap = *it;
-      if(currMap.find(s) != currMap.end()) {
-        lhs = currMap.find(s)->second.value;
-        break;
-      }
-    }
-    */
     lhs = this->left->Emit();
     lhs = llvm::cast<llvm::LoadInst>(lhs)->getPointerOperand();
-  } 
+  }
   else if(dynamic_cast<FieldAccess*>(left)) {
-    cerr << "[AssignExpr] LHS casted to FieldAccess" << endl;
-    FieldAccess* lhsFieldAccess = dynamic_cast<FieldAccess *>(left);
-    lhs = lhsFieldAccess->Emit();
-    cerr << "[AssignExpr] LHS Post-FieldAccess-Emit" << endl;
+    lhsFieldAccess = dynamic_cast<FieldAccess *>(left);
+    lhs = new llvm::LoadInst(lhsFieldAccess->getPointer(), "FieldAccessed", irgen->GetBasicBlock());
   }
   else if(dynamic_cast<ArrayAccess*>(left)) {
     cerr << "[AssignExpr] LHS ArrayAccess" << endl;
@@ -451,47 +485,39 @@ llvm::Value *AssignExpr::Emit() {
     lhs = dynamic_cast<ArrayAccess*>(left)->Emit();
     lhs = llvm::cast<llvm::LoadInst>(lhs)->getPointerOperand();
   }
-
-  cerr << "[AssignExpr] Found identifier." << endl;
   llvm::Type *type = lhs->getType();
-  /*
-  if(dynamic_cast<AssignExpr*>(this->right)) {
-    cerr << "[AssignExpr] The right expression is an AssignExpr" << endl;
+  if(this->op->IsOp("=")) {
+    cerr << "[AssignExpr] Simple Assignment is the Op" << endl;
+    if(lhsFieldAcces) {
+      cerr << "[AssignExpr] Extracting each element from swizzle index." << endl;
+      llvm::C
+    }
     retVal = this->right->Emit();
     new llvm::StoreInst(retVal, lhs, irgen->GetBasicBlock());
     return retVal;
   }
-  else */if(this->op->IsOp("=")) {
-    cerr << "[AssignExpr] Simple Assignment is the Op" << endl;
-    //return new llvm::StoreInst(right->Emit(), lhs, irgen->GetBasicBlock());
-    retVal = this->right->Emit();
-    new llvm::StoreInst(retVal, lhs, irgen->GetBasicBlock());
-    return retVal;
-  } 
   else if(this->op->IsOp("*=")) {
     cerr << "[AssignExpr] Multiplication is the Op" << endl;
     retVal = this->right->Emit();
     llvm::Type *type = lhs->getType();
     if(type == irgen->GetFloatType()) {
       binaryOp = llvm::BinaryOperator::CreateFMul(left->Emit(), retVal, "mulFAssign", irgen->GetBasicBlock());
-    } 
+    }
     else {
       binaryOp = llvm::BinaryOperator::CreateMul(left->Emit(), retVal, "mulAssign", irgen->GetBasicBlock());
     }
     new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
     return retVal;
-    //return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
   }
   else if(this->op->IsOp("+=")) {
     cerr << "[AssignExpr] '+=' is the Op" << endl;
     retVal = this->right->Emit();
     if(type == irgen->GetFloatType()) {
       binaryOp = llvm::BinaryOperator::CreateFAdd(left->Emit(), retVal, "addFAssign", irgen->GetBasicBlock());
-    } 
+    }
     else {
       binaryOp = llvm::BinaryOperator::CreateAdd(left->Emit(), retVal, "addAssign", irgen->GetBasicBlock());
     }
-    //return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
     new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
     return retVal;
   }
@@ -504,7 +530,6 @@ llvm::Value *AssignExpr::Emit() {
     else {
       binaryOp = llvm::BinaryOperator::CreateSub(left->Emit(), retVal, "subAssign", irgen->GetBasicBlock());
     }
-    //return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
     new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
     return retVal;
   }
@@ -517,7 +542,6 @@ llvm::Value *AssignExpr::Emit() {
     else {
       binaryOp = llvm::BinaryOperator::CreateSDiv(left->Emit(), retVal, "divAssign", irgen->GetBasicBlock());
     }
-    //return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
     new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
     return retVal;
   }
@@ -569,7 +593,7 @@ llvm::Value *ArrayAccess::Emit() {
   cerr << "[ArrayAccess] Emit is being called" << endl;
   /*
   // Ptr should be address of the base
-  // IdxList should be an ArrayRef<Value*> where the first element is a llvm::ConstantInt(0) and 
+  // IdxList should be an ArrayRef<Value*> where the first element is a llvm::ConstantInt(0) and
   // the second element is the llvm:: corresponding to the subscript
   llvm::GetElementPtrInst::Create(Value *Ptr, ArrayRef<Value*> IdxList, const Twine &NameStr, BasicBlock *InsertAtEnd);
   */
@@ -590,25 +614,74 @@ llvm::Value *FieldAccess::Emit() {
   cerr << "[FieldAccess] FieldAccess::Emit()" << endl;
   llvm::Value *fieldBase = this->base->Emit();
   string fieldName = this->field->GetName();
+  vector<llvm::Constant*> maskIdx;
+  llvm::Constant* mask;
   cerr << "[FieldAccess] Base: " << this->base << "." << fieldName << endl;
   if(fieldName.size() == 1) {
+    // Should evaluate to a floating point number
     cerr << "[FieldAccess] Field is length one" << endl;
     if(fieldName == "x") {
-      return llvm::ExtractElementInst::Create(fieldBase, llvm::ConstantInt::get(irgen->GetIntType(), 0), "", irgen->GetBasicBlock());
+      return llvm::ExtractElementInst::Create(fieldBase, llvm::ConstantInt::get(irgen->GetIntType(), 0), "vecfloat", irgen->GetBasicBlock());
     } else if(fieldName == "y") {
-      return llvm::ExtractElementInst::Create(fieldBase, llvm::ConstantInt::get(irgen->GetIntType(), 1), "", irgen->GetBasicBlock());
+      return llvm::ExtractElementInst::Create(fieldBase, llvm::ConstantInt::get(irgen->GetIntType(), 1), "vecfloat", irgen->GetBasicBlock());
     } else if(fieldName == "z") {
-      return llvm::ExtractElementInst::Create(fieldBase, llvm::ConstantInt::get(irgen->GetIntType(), 2), "", irgen->GetBasicBlock());
+      return llvm::ExtractElementInst::Create(fieldBase, llvm::ConstantInt::get(irgen->GetIntType(), 2), "vecfloat", irgen->GetBasicBlock());
     } else if(fieldName == "w") {
-      return llvm::ExtractElementInst::Create(fieldBase, llvm::ConstantInt::get(irgen->GetIntType(), 3), "", irgen->GetBasicBlock());
+      return llvm::ExtractElementInst::Create(fieldBase, llvm::ConstantInt::get(irgen->GetIntType(), 3), "vecfloat", irgen->GetBasicBlock());
     }
   } else if(fieldName.size() == 2) {
+    // Should evaluate to a vec2
     cerr << "[FieldAccess] Field is length two" << endl;
+    vector<llvm::Constant*> swizzles;
+    llvm::Constant* swizzleIdx;
+    if(fieldName[0] == 'x') {
+      swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
+      swizzles.push_back(swizzleIdx);
+    } else if(fieldName[0] == 'y') {
+      swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+      swizzles.push_back(swizzleIdx);
+    } else if(fieldName[0] == 'z') {
+      swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 2);
+      swizzles.push_back(swizzleIdx);
+    } else if(fieldName[0] == 'w') {
+      swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
+      swizzles.push_back(swizzleIdx);
+    }
+    if(fieldName[1] == 'x') {
+      swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
+      swizzles.push_back(swizzleIdx);
+    } else if(fieldName[1] == 'y') {
+      swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+      swizzles.push_back(swizzleIdx);
+    } else if(fieldName[1] == 'z') {
+      swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 2);
+      swizzles.push_back(swizzleIdx);
+    } else if(fieldName[1] == 'w') {
+      swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
+      swizzles.push_back(swizzleIdx);
+    }
+    llvm::ArrayRef<llvm::Constant*> swizzleArrayRef(swizzles);
+    llvm::Constant* mask = llvm::ConstantVector::get(swizzleArrayRef);
+    return new llvm::ShuffleVectorInst(fieldBase, llvm::UndefValue::get(fieldBase->getType()), mask, "vec2", irgen->GetBasicBlock());
   } else if(fieldName.size() == 3) {
+    // Should evaluate to a vec3
     cerr << "[FieldAccess] Field is length three" << endl;
+//    maskIdx.push_back(new_ind);
+//    maskIdx.push_back(new_ind);
+//    maskIdx.push_back(new_ind);
+    mask = llvm::ConstantVector::get(maskIdx);
+    return new llvm::ShuffleVectorInst(fieldBase, llvm::UndefValue::get(fieldBase->getType()), mask, "vec3", irgen->GetBasicBlock());
   } else if(fieldName.size() == 4) {
+    // Should evaluate to a vec2
     cerr << "[FieldAccess] Field is length four" << endl;
+//    maskIdx.push_back(llvm::Constant*());
+//    maskIdx.push_back(new_ind);
+//    maskIdx.push_back(new_ind);
+//    maskIdx.push_back(new_ind);
+    mask = llvm::ConstantVector::get(maskIdx);
+    return new llvm::ShuffleVectorInst(fieldBase, llvm::UndefValue::get(fieldBase->getType()), mask, "vec4", irgen->GetBasicBlock());
   } else if(fieldName.size() >= 5) {
+    // Should not evaluate
     cerr << "[FieldAccess] Field length is oversized." << endl;
   }
   cerr << "[FieldAccess] Reached end of FieldAccess." << endl;

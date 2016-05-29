@@ -203,6 +203,7 @@ class FieldAccess : public LValue {
   const char *GetPrintNameForNode() { return "FieldAccess"; }
   void PrintChildren(int indentLevel);
   llvm::Value *Emit();
+  llvm::Value *getPointer();
 };
 
 /* Like field access, call is used both for qualified base.field()
