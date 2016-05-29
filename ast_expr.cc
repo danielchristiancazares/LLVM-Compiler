@@ -445,6 +445,21 @@ llvm::Value *LogicalExpr::Emit() {
   return NULL;
 }
 
+llvm::Value* FieldAccess::getPointer() {
+  llvm::Value* lhs = NULL;
+  VarExpr *lhsVar = dynamic_cast<VarExpr *>(this->base);
+  string s = lhsVar->GetIdentifier()->GetName();
+  vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = this->symtable->symTable.rbegin();
+  for (; it != this->symtable->symTable.rend() && lhs == NULL; ++it) {
+    map<string, SymbolTable::DeclAssoc> currMap = *it;
+    if(currMap.find(s) != currMap.end()) {
+      lhs = currMap.find(s)->second.value;
+      break;
+    }
+  }
+  return lhs;
+}
+
 llvm::Value *AssignExpr::Emit() {
   cerr << "[AssignExpr] AssignExpr::Emit()" << endl;
   llvm::Value *lhs = NULL;
@@ -458,8 +473,9 @@ llvm::Value *AssignExpr::Emit() {
   }
   else if(dynamic_cast<FieldAccess*>(left)) {
     cerr << "[AssignExpr] LHS casted to FieldAccess" << endl;
-    lhs = dynamic_cast<FieldAccess *>(left);
-    lhs = llvm::cast<llvm::LoadInst>(lhs)->getPointerOperand();
+    FieldAccess* lhsFieldAccess = dynamic_cast<FieldAccess *>(left);
+    lhs = new llvm::LoadInst(lhsFieldAccess->getPointer(), "FieldAccessed", irgen->GetBasicBlock());
+    cerr << "[AssignExpr] LHS Pointer Address found!?" << endl;
   }
   else if(dynamic_cast<ArrayAccess*>(left)) {
     cerr << "[AssignExpr] LHS ArrayAccess" << endl;
@@ -498,7 +514,6 @@ llvm::Value *AssignExpr::Emit() {
     else {
       binaryOp = llvm::BinaryOperator::CreateAdd(left->Emit(), retVal, "addAssign", irgen->GetBasicBlock());
     }
-    //return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
     new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
     return retVal;
   }
@@ -511,7 +526,6 @@ llvm::Value *AssignExpr::Emit() {
     else {
       binaryOp = llvm::BinaryOperator::CreateSub(left->Emit(), retVal, "subAssign", irgen->GetBasicBlock());
     }
-    //return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
     new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
     return retVal;
   }
@@ -524,7 +538,6 @@ llvm::Value *AssignExpr::Emit() {
     else {
       binaryOp = llvm::BinaryOperator::CreateSDiv(left->Emit(), retVal, "divAssign", irgen->GetBasicBlock());
     }
-    //return new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
     new llvm::StoreInst(binaryOp, lhs, irgen->GetBasicBlock());
     return retVal;
   }
