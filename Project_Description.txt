@@ -1,6 +1,47 @@
-In approaching this assignment one of the things we started out 
-with was creating Emit() functions for to the nodes, implemented 
+In approaching this assignment one of the things we first started out 
+with was creating Emit() functions for the nodes, by implementing them
 using the same virtual method business used for the Print and Check 
-in the last programming projects..
+functions in the last programming projects. We did not really implement
+that much of the semantic ananlysis from project 3 in this project 
+since it was not necessarily required for us to do so. However, we did
+leave in many of the Check and Print functions in our code. Before we 
+could really get started, it was crucial to go over the LLVM Language 
+Reference manual to make sure we had a good grasp on BC and LLVM module 
+structure. We tried to follow the advice approach from the write up by 
+traversing the AST tree nodes to emit instructions since the root node
+can map to LLVM module. In this node, each variable decl can be generated 
+as LLVM GlobalVariable, and each function decl as a LLVM function.
 
-To be cont.. Need to summarize the rest
+We also created an entry block in the function body, and added many local
+variables that we saw fit to be able to proceed with the functionality of
+our functions and code. For simplicity, we used a load/store based
+generation so that we only needed to scan the AST tree once. We also had 
+keep the basic blocks for the if/while/for constrol structures in lexical 
+order to make sure the LLVM structure was well formed. Overall, VarDecl
+and FnDecl were the toughest to implement and once we began testing, much
+of the reason why many of our tests were failing were due to errors in
+FnDecl and VarDecl as opposed to the errors being inside the functions we
+were testing themselves. Aside from that, we encountered many errors that 
+were difficult to fix. Reading some online references and documentation,
+as well as looking through piazza where many people were experiencing the
+same kind of issues really helped us a lot.
+
+One of our main issues was that we kept getting segmentation faults for
+a lot of the tests we were running, especially the tests provided for
+the checkpoint. By using valgrind we were able to debug many of our errors
+as well as changing the logic of some of our functions which was the reason
+for many of our issues throughout this project. For testing, we used the
+first set of tests provided to us which were the checkpoint tests. Once
+we got all of those testing working, we added some more tests of our own
+to try to catch any hidden testing that might be checked. We also ran our
+tests on the extra set of tests provided on piazza by the TA and we also
+noticed that some of our peers posted some tests of their own on piazza.
+Because LLVM IR doesn’t have swizzles, we had to simulate it via shufflevector
+instruction, which was one of the toughest implementations we encountered in
+the project.
+
+Reading through piazza and reading the assigned chapters and references as well 
+as searching for some documentation on LLVM helped us solve a lot of our issues.
+We finally managed to get a working solution to where all the tests we were using
+passed and we got rid of all of the warnings when running make.
+
