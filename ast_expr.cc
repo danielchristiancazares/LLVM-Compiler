@@ -483,34 +483,28 @@ llvm::Value *AssignExpr::Emit() {
   }
 
   cerr << "[AssignExpr] Found identifier." << endl;
-=======
-  //llvm::Value *rhs = right->Emit();
-
-  llvm::Value *lhs = NULL;
-  string s = lhsVar->GetIdentifier()->GetName();
-  vector < map < string, SymbolTable::DeclAssoc > > ::reverse_iterator it = this->symtable->symTable.rbegin();
-  for (; it != this->symtable->symTable.rend() && lhs == NULL; ++it) {
-    map<string, SymbolTable::DeclAssoc> currMap = *it;
-    if(currMap.find(s) != currMap.end()) {
-      lhs = currMap.find(s)->second.value;
-      break;
-    }
-  }
-
   llvm::Type *type = lhs->getType();
-  if(this->op->IsOp("=")) {
+  /*
+  if(dynamic_cast<AssignExpr*>(this->right)) {
+    cerr << "[AssignExpr] The right expression is an AssignExpr" << endl;
+    retVal = this->right->Emit();
+    new llvm::StoreInst(retVal, lhs, irgen->GetBasicBlock());
+    return retVal;
+  }
+  else */if(this->op->IsOp("=")) {
     cerr << "[AssignExpr] Simple Assignment is the Op" << endl;
     //return new llvm::StoreInst(right->Emit(), lhs, irgen->GetBasicBlock());
     retVal = this->right->Emit();
     new llvm::StoreInst(retVal, lhs, irgen->GetBasicBlock());
     return retVal;
-  } 
+  }
   else if(this->op->IsOp("*=")) {
     cerr << "[AssignExpr] Multiplication is the Op" << endl;
     retVal = this->right->Emit();
+    llvm::Type *type = lhs->getType();
     if(type == irgen->GetFloatType()) {
       binaryOp = llvm::BinaryOperator::CreateFMul(left->Emit(), retVal, "mulFAssign", irgen->GetBasicBlock());
-    } 
+    }
     else {
       binaryOp = llvm::BinaryOperator::CreateMul(left->Emit(), retVal, "mulAssign", irgen->GetBasicBlock());
     }
@@ -523,7 +517,7 @@ llvm::Value *AssignExpr::Emit() {
     retVal = this->right->Emit();
     if(type == irgen->GetFloatType()) {
       binaryOp = llvm::BinaryOperator::CreateFAdd(left->Emit(), retVal, "addFAssign", irgen->GetBasicBlock());
-    } 
+    }
     else {
       binaryOp = llvm::BinaryOperator::CreateAdd(left->Emit(), retVal, "addAssign", irgen->GetBasicBlock());
     }
@@ -626,6 +620,8 @@ llvm::Value *FieldAccess::Emit() {
   cerr << "[FieldAccess] FieldAccess::Emit()" << endl;
   llvm::Value *fieldBase = this->base->Emit();
   string fieldName = this->field->GetName();
+  vector<llvm::Constant*> maskIdx;
+  llvm::Constant* mask;
   cerr << "[FieldAccess] Base: " << this->base << "." << fieldName << endl;
   if(fieldName.size() == 1) {
     // Should evaluate to a floating point number
@@ -642,15 +638,54 @@ llvm::Value *FieldAccess::Emit() {
   } else if(fieldName.size() == 2) {
     // Should evaluate to a vec2
     cerr << "[FieldAccess] Field is length two" << endl;
-    llvm::ArrayRef<llvm::Constant *> swizzleArray(argTypes);
-    llvm::Constant* vectorConstant = llvm::ConstantVector::get(swizzleArray);
-    return new llvm::ShuffleVectorInst(fieldBase, llvm::UndefValue::get(fieldBase->getType()), vectorConstant, "", irgen->GetBasicBlock());
+    vector<llvm::Constant*> swizzles;
+    llvm::Constant* swizzleIdx;
+    if(fieldName[0] == 'x') {
+      swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
+      swizzles.push_back(swizzleIdx);
+    } else if(fieldName[0] == 'y') {
+      swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+      swizzles.push_back(swizzleIdx);
+    } else if(fieldName[0] == 'z') {
+      swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 2);
+      swizzles.push_back(swizzleIdx);
+    } else if(fieldName[0] == 'w') {
+      swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
+      swizzles.push_back(swizzleIdx);
+    }
+    if(fieldName[1] == 'x') {
+      swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
+      swizzles.push_back(swizzleIdx);
+    } else if(fieldName[1] == 'y') {
+      swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+      swizzles.push_back(swizzleIdx);
+    } else if(fieldName[1] == 'z') {
+      swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 2);
+      swizzles.push_back(swizzleIdx);
+    } else if(fieldName[1] == 'w') {
+      swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
+      swizzles.push_back(swizzleIdx);
+    }
+    llvm::ArrayRef<llvm::Constant*> swizzleArrayRef(swizzles);
+    llvm::Constant* mask = llvm::ConstantVector::get(swizzleArrayRef);
+    return new llvm::ShuffleVectorInst(fieldBase, llvm::UndefValue::get(fieldBase->getType()), mask, "vec2", irgen->GetBasicBlock());
   } else if(fieldName.size() == 3) {
     // Should evaluate to a vec3
     cerr << "[FieldAccess] Field is length three" << endl;
+//    maskIdx.push_back(new_ind);
+//    maskIdx.push_back(new_ind);
+//    maskIdx.push_back(new_ind);
+    mask = llvm::ConstantVector::get(maskIdx);
+    return new llvm::ShuffleVectorInst(fieldBase, llvm::UndefValue::get(fieldBase->getType()), mask, "vec3", irgen->GetBasicBlock());
   } else if(fieldName.size() == 4) {
     // Should evaluate to a vec2
     cerr << "[FieldAccess] Field is length four" << endl;
+//    maskIdx.push_back(llvm::Constant*());
+//    maskIdx.push_back(new_ind);
+//    maskIdx.push_back(new_ind);
+//    maskIdx.push_back(new_ind);
+    mask = llvm::ConstantVector::get(maskIdx);
+    return new llvm::ShuffleVectorInst(fieldBase, llvm::UndefValue::get(fieldBase->getType()), mask, "vec4", irgen->GetBasicBlock());
   } else if(fieldName.size() >= 5) {
     // Should not evaluate
     cerr << "[FieldAccess] Field length is oversized." << endl;
