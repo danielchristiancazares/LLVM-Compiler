@@ -490,6 +490,11 @@ llvm::Value *AssignExpr::Emit() {
     cerr << "[AssignExpr] Simple Assignment is the Op" << endl;
     if(lhsFieldAccess) {
       cerr << "[AssignExpr] Extracting each element from swizzle index." << endl;
+      string s = lhsFieldAccess->GetSwizzle();
+      cerr << "[AssignExpr] Swizzle value: " << endl;
+      for(int i = 0; i < s.size(); i++){
+        cerr << s[i] << endl;
+      }
     }
     retVal = this->right->Emit();
     new llvm::StoreInst(retVal, lhs, irgen->GetBasicBlock());

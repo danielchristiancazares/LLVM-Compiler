@@ -204,6 +204,8 @@ class FieldAccess : public LValue {
   void PrintChildren(int indentLevel);
   llvm::Value *Emit();
   llvm::Value *getPointer();
+  char *GetSwizzle() const { return this->field->GetName(); }
+ 
 };
 
 /* Like field access, call is used both for qualified base.field()
