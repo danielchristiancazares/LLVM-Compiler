@@ -36,7 +36,29 @@ llvm::Type *IRGenerator::Converter(Type *astTy) {
     ty = llvm::ArrayType::get(llvm::VectorType::get(llvm::Type::getFloatTy(*context), 3), 3);
   } else if(astTy == Type::mat4Type) {
     ty = llvm::ArrayType::get(llvm::VectorType::get(llvm::Type::getFloatTy(*context), 4), 4);
-  }
+  } /*else if(astTy == Type::ArrayType) {
+    Type *arraytype = astTy->GetElemType();
+    int elemCount = astTy->getElemCount();
+    if(arraytype == Type::intType) {
+      ty = llvm::ArrayType::get(llvm::Type::getInt32Ty(*context), elemCount);
+    } else if(arraytype == Type::boolType) {
+      ty = llvm::ArrayType::get(llvm::Type::getInt1Ty(*context), elemCount);
+    } else if(arraytype == Type::floatType) {
+      ty = llvm::ArrayType::get(llvm::Type::getFloatTy(*context), elemCount);
+    } else if(arraytype == Type::vec2Type) {
+      ty = llvm::ArrayType::get(llvm::VectorType::get(llvm::Type::getFloatTy(*context), 2), elemCount);
+    } else if(arraytype == Type::vec3Type) {
+      ty = llvm::ArrayType::get(llvm::VectorType::get(llvm::Type::getFloatTy(*context), 3), elemCount);
+    } else if(arraytype == Type::vec4Type) {
+      ty = llvm::ArrayType::get(llvm::VectorType::get(llvm::Type::getFloatTy(*context), 4), elemCount);
+    } else if(arraytype == Type::mat2Type) {
+      ty = llvm::ArrayType::get(llvm::ArrayType::get(llvm::VectorType::get(llvm::Type::getFloatTy(*context), 2), 2), elemCount);
+    } else if(arraytype == Type::mat3Type) {
+      ty = llvm::ArrayType::get(llvm::ArrayType::get(llvm::VectorType::get(llvm::Type::getFloatTy(*context), 3), 3), elemCount);
+    } else if(arraytype == Type::mat4Type) {
+      ty = llvm::ArrayType::get(llvm::ArrayType::get(llvm::VectorType::get(llvm::Type::getFloatTy(*context), 4), 4), elemCount);
+    }
+  }*/
   return ty;
 }
 

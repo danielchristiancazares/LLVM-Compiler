@@ -43,21 +43,51 @@ void VarDecl::PrintChildren(int indentLevel) {
 
 llvm::Value *VarDecl::Emit() {
   cerr << "[VarDecl] VarDecl::Emit()" << endl;
+  llvm::LLVMContext *context = irgen->GetContext();
   llvm::Value *value = NULL;
+  llvm::Type *elemtype = NULL;
   char *name;
   bool isConstant;
   llvm::Constant *constant;
   SymbolTable::DeclAssoc declassoc;
 
   // gets llvm type
-  llvm::Type *type = Node::irgen->Converter(this->type);
+  if (dynamic_cast<ArrayType*>(this->type)) {
+    cerr << "VarDecl is an ArrayType" << endl;
+    Type *arraytype = (dynamic_cast<ArrayType*>(this->type))->GetElemType();
+    int elemCount = (dynamic_cast<ArrayType*>(this->type))->getElemCount();
+    if(arraytype == Type::intType) {
+      elemtype = llvm::ArrayType::get(llvm::Type::getInt32Ty(*context), elemCount);
+    } else if(arraytype == Type::boolType) {
+      elemtype = llvm::ArrayType::get(llvm::Type::getInt1Ty(*context), elemCount);
+    } else if(arraytype == Type::floatType) {
+      elemtype = llvm::ArrayType::get(llvm::Type::getFloatTy(*context), elemCount);
+    } else if(arraytype == Type::vec2Type) {
+      elemtype = llvm::ArrayType::get(llvm::VectorType::get(llvm::Type::getFloatTy(*context), 2), elemCount);
+    } else if(arraytype == Type::vec3Type) {
+      elemtype = llvm::ArrayType::get(llvm::VectorType::get(llvm::Type::getFloatTy(*context), 3), elemCount);
+    } else if(arraytype == Type::vec4Type) {
+      elemtype = llvm::ArrayType::get(llvm::VectorType::get(llvm::Type::getFloatTy(*context), 4), elemCount);
+    } else if(arraytype == Type::mat2Type) {
+      elemtype = llvm::ArrayType::get(llvm::ArrayType::get(llvm::VectorType::get(llvm::Type::getFloatTy(*context), 2), 2), elemCount);
+    } else if(arraytype == Type::mat3Type) {
+      elemtype = llvm::ArrayType::get(llvm::ArrayType::get(llvm::VectorType::get(llvm::Type::getFloatTy(*context), 3), 3), elemCount);
+    } else if(arraytype == Type::mat4Type) {
+      elemtype = llvm::ArrayType::get(llvm::ArrayType::get(llvm::VectorType::get(llvm::Type::getFloatTy(*context), 4), 4), elemCount);
+    }
+  }
+  else {
+    elemtype = Node::irgen->Converter(this->type);
+  }
+  //llvm::Type *type = Node::irgen->Converter(this->type);
+  cerr << "[VarDecl] The type is " << this->type << " " << elemtype << endl;
 
   // sets the constant
   if(this->assignTo != NULL) {
     constant = llvm::cast<llvm::Constant>(this->assignTo->Emit());
   }
   else {
-    constant = llvm::Constant::getNullValue(type);
+    constant = llvm::Constant::getNullValue(elemtype);
   }
 
   name = this->GetIdentifier()->GetName();
@@ -68,7 +98,7 @@ llvm::Value *VarDecl::Emit() {
     cerr << "[VarDecl] SymbolTable Empty" << endl;
     map <string, SymbolTable::DeclAssoc> newMap;
     cerr << "[VarDecl] Global variable is being created" << endl;
-    value = new llvm::GlobalVariable(*mod, type, false, llvm::GlobalValue::ExternalLinkage, constant, name);
+    value = new llvm::GlobalVariable(*mod, elemtype, false, llvm::GlobalValue::ExternalLinkage, constant, name);
     declassoc.value = value;
     declassoc.decl = this;
     declassoc.isGlobal = true;
@@ -92,12 +122,12 @@ llvm::Value *VarDecl::Emit() {
     */
     if(Node::symtable->symTable.size() <= 1) {
       cerr << "[FnDecl] Global variable declared on non-empty table" << endl;
-      value = new llvm::GlobalVariable(*mod, type, false, llvm::GlobalValue::ExternalLinkage, constant, name);
+      value = new llvm::GlobalVariable(*mod, elemtype, false, llvm::GlobalValue::ExternalLinkage, constant, name);
       declassoc.isGlobal = true;
     }
     else {
       cerr << "[VarDecl] Local variable declared on non-empty table" << endl;
-      value = new llvm::AllocaInst(type, name, irgen->GetBasicBlock());
+      value = new llvm::AllocaInst(elemtype, name, irgen->GetBasicBlock());
       new llvm::StoreInst(constant, value, irgen->GetBasicBlock());
     }
     declassoc.value = value;

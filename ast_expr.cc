@@ -430,11 +430,20 @@ llvm::Value *AssignExpr::Emit() {
         break;
       }
     }
-  } else {
+  } 
+  else if(dynamic_cast<FieldAccess*>(left)) {
     cerr << "[AssignExpr] LHS casted to FieldAccess" << endl;
     FieldAccess* lhsFieldAccess = dynamic_cast<FieldAccess *>(left);
     lhs = lhsFieldAccess->Emit();
     cerr << "[AssignExpr] LHS Post-FieldAccess-Emit" << endl;
+  }
+  else if(dynamic_cast<ArrayAccess*>(left)) {
+    cerr << "[AssignExpr] LHS ArrayAccess" << endl;
+    if(lhs == NULL) {
+      cerr << "[AssignExpr] Houston we have a problem" << endl;
+    }
+    lhs = dynamic_cast<ArrayAccess*>(left)->Emit();
+    lhs = llvm::cast<llvm::LoadInst>(lhs)->getPointerOperand();
   }
 
   cerr << "[AssignExpr] Found identifier." << endl;
@@ -527,6 +536,27 @@ llvm::Value *PostfixExpr::Emit() {
   }
   new llvm::StoreInst(binaryOp, value, irgen->GetBasicBlock());
   return lhs;
+}
+
+llvm::Value *ArrayAccess::Emit() {
+  cerr << "[ArrayAccess] Emit is being called" << endl;
+  /*
+  // Ptr should be address of the base
+  // IdxList should be an ArrayRef<Value*> where the first element is a llvm::ConstantInt(0) and 
+  // the second element is the llvm:: corresponding to the subscript
+  llvm::GetElementPtrInst::Create(Value *Ptr, ArrayRef<Value*> IdxList, const Twine &NameStr, BasicBlock *InsertAtEnd);
+  */
+  vector<llvm::Value*> arrayVal;
+  arrayVal.push_back(llvm::ConstantInt::get(irgen->GetIntType(), 0));
+  llvm::Value* arraySubscript = this->subscript->Emit();
+  arrayVal.push_back(arraySubscript);
+  llvm::Value* arrBase = this->base->Emit();
+  llvm::Value* baseAddress = llvm::cast<llvm::LoadInst>(arrBase)->getPointerOperand();
+  llvm::ArrayRef<llvm::Value*> arrayOffset(arrayVal);
+  cerr << "[ArrayAccess] This is where it segfaults" << endl;
+  llvm::Value* value = llvm::GetElementPtrInst::Create(baseAddress, arrayOffset, "ArrayAccess", irgen->GetBasicBlock());
+  return new llvm::LoadInst(value, "ArrayAccessed", irgen->GetBasicBlock());
+  //return value;
 }
 
 llvm::Value *FieldAccess::Emit() {
