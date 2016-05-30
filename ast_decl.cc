@@ -42,7 +42,7 @@ void VarDecl::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *VarDecl::Emit() {
-  cerr << "[VarDecl] VarDecl::Emit()" << endl;
+  // cerr << "[VarDecl] VarDecl::Emit()" << endl;
   llvm::LLVMContext *context = irgen->GetContext();
   llvm::Value *value = NULL;
   llvm::Type *elemtype = NULL;
@@ -53,7 +53,7 @@ llvm::Value *VarDecl::Emit() {
 
   // gets llvm type
   if (dynamic_cast<ArrayType*>(this->type)) {
-    cerr << "VarDecl is an ArrayType" << endl;
+    // cerr << "VarDecl is an ArrayType" << endl;
     Type *arraytype = (dynamic_cast<ArrayType*>(this->type))->GetElemType();
     int elemCount = (dynamic_cast<ArrayType*>(this->type))->getElemCount();
     if(arraytype == Type::intType) {
@@ -80,7 +80,7 @@ llvm::Value *VarDecl::Emit() {
     elemtype = Node::irgen->Converter(this->type);
   }
   //llvm::Type *type = Node::irgen->Converter(this->type);
-  cerr << "[VarDecl] The type is " << this->type << " " << elemtype << endl;
+  // cerr << "[VarDecl] The type is " << this->type << " " << elemtype << endl;
 
   // sets the constant
   if(this->assignTo != NULL) {
@@ -95,38 +95,38 @@ llvm::Value *VarDecl::Emit() {
   llvm::Module *mod = irgen->GetOrCreateModule("irgen.bc");
 
   if(Node::symtable->symTable.empty()) {
-    cerr << "[VarDecl] SymbolTable Empty" << endl;
+    // cerr << "[VarDecl] SymbolTable Empty" << endl;
     map <string, SymbolTable::DeclAssoc> newMap;
-    cerr << "[VarDecl] Global variable is being created" << endl;
+    // cerr << "[VarDecl] Global variable is being created" << endl;
     value = new llvm::GlobalVariable(*mod, elemtype, false, llvm::GlobalValue::ExternalLinkage, constant, name);
     declassoc.value = value;
     declassoc.decl = this;
     declassoc.isGlobal = true;
-    //cerr << "TABLE IS EMPTY!!!" << endl;
-    //cerr << "global variable declared" << endl;
-    //cerr << "This is what the declass global is" << declassoc.isGlobal << endl;
+    // cerr << "TABLE IS EMPTY!!!" << endl;
+    // cerr << "global variable declared" << endl;
+    // cerr << "This is what the declass global is" << declassoc.isGlobal << endl;
     newMap.insert(pair<string, SymbolTable::DeclAssoc>(name, declassoc));
     Node::symtable->symTable.push_back(newMap);
   }
   else {
-    cerr << "[VarDecl] SymbolTable Non-Empty" << endl;
+    // cerr << "[VarDecl] SymbolTable Non-Empty" << endl;
     map <string, SymbolTable::DeclAssoc> currentScope = Node::symtable->symTable.back();
-    //cerr << "segfault at currentVar" << endl;
+    // cerr << "segfault at currentVar" << endl;
     string currentVar = this->GetIdentifier()->GetName();
-    //cerr << "JK not at currentVar" << endl;
+    // cerr << "JK not at currentVar" << endl;
     /*
     // checks if this is a global scope
-    cerr << "Segfault at currDeclAssoc" << endl;
+    // cerr << "Segfault at currDeclAssoc" << endl;
     SymbolTable::DeclAssoc currDeclAssoc = currentScope.rbegin()->second;
-    cerr << "JK not at currDeclAssoc" << endl;
+    // cerr << "JK not at currDeclAssoc" << endl;
     */
     if(Node::symtable->symTable.size() <= 1) {
-      cerr << "[FnDecl] Global variable declared on non-empty table" << endl;
+      // cerr << "[FnDecl] Global variable declared on non-empty table" << endl;
       value = new llvm::GlobalVariable(*mod, elemtype, false, llvm::GlobalValue::ExternalLinkage, constant, name);
       declassoc.isGlobal = true;
     }
     else {
-      cerr << "[VarDecl] Local variable declared on non-empty table" << endl;
+      // cerr << "[VarDecl] Local variable declared on non-empty table" << endl;
       value = new llvm::AllocaInst(elemtype, name, irgen->GetBasicBlock());
       new llvm::StoreInst(constant, value, irgen->GetBasicBlock());
     }
@@ -169,7 +169,7 @@ void FnDecl::PrintChildren(int indentLevel) {
 
 llvm::Value *FnDecl::Emit() {
   // TODO
-  cerr << "[FnDecl] FnDecl::Emit()" << endl;
+  // cerr << "[FnDecl] FnDecl::Emit()" << endl;
   // storing the return type
   llvm::Type *returnType = irgen->Converter(this->returnType);
 
@@ -181,7 +181,7 @@ llvm::Value *FnDecl::Emit() {
 
   //go through the formals
   for (int i = 0; i < this->formals->NumElements(); i++) {
-    //cerr << "Populing the formals1" << endl;
+    // cerr << "Populing the formals1" << endl;
     VarDecl *v = this->formals->Nth(i);
     tempType = irgen->Converter(v->GetType());
     argTypes.push_back(tempType);
@@ -201,7 +201,7 @@ llvm::Value *FnDecl::Emit() {
   string argName;
   llvm::Function::arg_iterator it = f->arg_begin();
   for (int i = 0; i < this->formals->NumElements(); i++) {
-    //cerr << "Populing the formals2" << endl;
+    // cerr << "Populing the formals2" << endl;
     VarDecl *v = this->formals->Nth(i);
     //v->Emit();
     argName = v->GetIdentifier()->GetName();
@@ -217,7 +217,7 @@ llvm::Value *FnDecl::Emit() {
   irgen->SetBasicBlock(bb);
 
   if (Node::symtable->symTable.empty()) {
-    cerr << "[FnDecl] SymbolTable Empty" << endl;
+    // cerr << "[FnDecl] SymbolTable Empty" << endl;
     string name = this->GetIdentifier()->GetName();
     map <string, SymbolTable::DeclAssoc> newScope;
     declassoc.decl = this;
@@ -227,7 +227,7 @@ llvm::Value *FnDecl::Emit() {
   }
   else {
     // inserting the function name to the current scope
-    cerr << "[FnDecl] SymbolTable Non-Empty" << endl;
+    // cerr << "[FnDecl] SymbolTable Non-Empty" << endl;
     map <string, SymbolTable::DeclAssoc> currentScope = Node::symtable->symTable.back();
     declassoc.decl = this;
     declassoc.value = f;
@@ -243,7 +243,7 @@ llvm::Value *FnDecl::Emit() {
     VarDecl *v = this->formals->Nth(i);
     name = v->GetIdentifier()->GetName();
     tempType = irgen->Converter(v->GetType());
-    cerr << "[FnDecl] Local variable is being created from formals" << endl;
+    // cerr << "[FnDecl] Local variable is being created from formals" << endl;
     value = new llvm::AllocaInst(tempType, name, irgen->GetBasicBlock());
     new llvm::StoreInst(arg, value, irgen->GetBasicBlock());
     declassoc.value = value;
@@ -258,12 +258,12 @@ llvm::Value *FnDecl::Emit() {
   stmtblock->EmitFromFunc();
 
 //  if(!irgen->GetBasicBlock()->getTerminator()) {
-//    cerr << "[FnDecl] UnreachableInst returned." << endl;
+//    // cerr << "[FnDecl] UnreachableInst returned." << endl;
 //    return new llvm::UnreachableInst(*context,irgen->GetBasicBlock());
 //  }
 
   if(irgen->GetBasicBlock()->getTerminator() == NULL) {
-    cerr << "[FnDecl] UnreachableInst returned." << endl;
+    // cerr << "[FnDecl] UnreachableInst returned." << endl;
     new llvm::UnreachableInst(*context, irgen->GetBasicBlock());
   }
 
