@@ -20,6 +20,8 @@ llvm::Type *IRGenerator::Converter(Type *astTy) {
   llvm::Type *ty = NULL;
   if(astTy == Type::intType) {
     ty = llvm::Type::getInt32Ty(*context);
+  } else if(astTy == Type::voidType) {
+    ty = llvm::Type::getVoidTy (*context);
   } else if(astTy == Type::boolType) {
     ty = llvm::Type::getInt1Ty(*context);
   } else if(astTy == Type::floatType) {
@@ -36,7 +38,8 @@ llvm::Type *IRGenerator::Converter(Type *astTy) {
     ty = llvm::ArrayType::get(llvm::VectorType::get(llvm::Type::getFloatTy(*context), 3), 3);
   } else if(astTy == Type::mat4Type) {
     ty = llvm::ArrayType::get(llvm::VectorType::get(llvm::Type::getFloatTy(*context), 4), 4);
-  } /*else if(astTy == Type::ArrayType) {
+  } 
+  /*else if(astTy == Type::ArrayType) {
     Type *arraytype = astTy->GetElemType();
     int elemCount = astTy->getElemCount();
     if(arraytype == Type::intType) {

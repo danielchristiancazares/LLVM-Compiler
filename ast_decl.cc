@@ -263,8 +263,13 @@ llvm::Value *FnDecl::Emit() {
 //  }
 
   if(irgen->GetBasicBlock()->getTerminator() == NULL) {
-    cerr << "[FnDecl] UnreachableInst returned." << endl;
-    new llvm::UnreachableInst(*context, irgen->GetBasicBlock());
+    if((this->returnType)->IsEquivalentTo(Type::voidType)) {
+      llvm::ReturnInst::Create(*context, irgen->GetBasicBlock());
+    }
+    else {
+      cerr << "[FnDecl] UnreachableInst returned." << endl;
+      new llvm::UnreachableInst(*context, irgen->GetBasicBlock());
+    }
   }
 
   irgen->SetBasicBlock(NULL);

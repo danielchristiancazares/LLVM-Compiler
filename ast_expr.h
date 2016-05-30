@@ -168,7 +168,7 @@ class ConditionalExpr : public Expr {
   ConditionalExpr(Expr *c, Expr *t, Expr *f);
   void PrintChildren(int indentLevel);
   const char *GetPrintNameForNode() { return "ConditionalExpr"; }
-  llvm::Value *Emit() { return NULL; } // TODO Verify this is correct.
+  llvm::Value *Emit(); // TODO Verify this is correct.
 };
 
 class LValue : public Expr {
