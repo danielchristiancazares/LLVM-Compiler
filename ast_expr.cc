@@ -469,6 +469,7 @@ llvm::Value *AssignExpr::Emit() {
   llvm::Value *retVal = NULL;
   VarExpr *lhsVar = dynamic_cast<VarExpr *>(left);
   llvm::Value* binaryOp = NULL;
+  llvm::Value* insertOp = NULL;
   if(lhsVar) {
     // cerr << "[AssignExpr] LHS casted to VarExpr" << endl;
     lhs = this->left->Emit();
@@ -476,7 +477,7 @@ llvm::Value *AssignExpr::Emit() {
   }
   else if(dynamic_cast<FieldAccess*>(left)) {
     lhsFieldAccess = dynamic_cast<FieldAccess*>(left);
-    lhs = new llvm::LoadInst(lhsFieldAccess->getPointer(), "FieldAccessed", irgen->GetBasicBlock());
+    lhs = lhsFieldAccess->getPointer();
   }
   else if(dynamic_cast<ArrayAccess*>(left)) {
     lhs = dynamic_cast<ArrayAccess*>(left)->Emit();
@@ -487,7 +488,7 @@ llvm::Value *AssignExpr::Emit() {
     cerr << "[AssignExpr] Simple Assignment is the Op" << endl;
     if(lhsFieldAccess) {
       rhs = this->right->Emit();
-      cerr << "[AssignExpr] Received right." << endl;
+      llvm::Value* lhsValue = new llvm::LoadInst(lhsFieldAccess->getPointer(),"loadvector",irgen->GetBasicBlock());
       string swizzle = lhsFieldAccess->GetSwizzle();
       llvm::Constant* swizzleIdx;
       llvm::Value* extractedValue;
@@ -503,15 +504,16 @@ llvm::Value *AssignExpr::Emit() {
         }
         if(rhs->getType() == irgen->GetFloatType()) {
           cerr << "Right is just a float and left is a vector type." << endl;
-          llvm::InsertElementInst::Create(lhs, rhs, swizzleIdx, "singleFloat", irgen->GetBasicBlock());
+          insertOp = llvm::InsertElementInst::Create(lhsValue, rhs, swizzleIdx, "singleFloat", irgen->GetBasicBlock());
           break;
         } else {
           extractedValue = llvm::ExtractElementInst::Create(rhs, swizzleIdx, "extractedVal", irgen->GetBasicBlock());
+          insertOp = llvm::InsertElementInst::Create(lhsValue, extractedValue, swizzleIdx, "newValInserted", irgen->GetBasicBlock());
         }
-        llvm::InsertElementInst::Create(lhs, extractedValue, swizzleIdx, "newValInserted", irgen->GetBasicBlock());
       }
       cerr << "[AssignExpr] Storing new value value." << endl;
-      new llvm::StoreInst(rhs, lhs, irgen->GetBasicBlock());
+      // new llvm::StoreInst(lhsValue, lhs, irgen->GetBasicBlock());
+      new llvm::StoreInst(insertOp, lhs, irgen->GetBasicBlock());
       cerr << "[AssignExpr] Storing return value." << endl;
       return rhs;
     }
@@ -634,6 +636,7 @@ llvm::Value *FieldAccess::Emit() {
   string fieldName = this->field->GetName();
   vector<llvm::Constant*> maskIdx;
   llvm::Constant* mask;
+  llvm::Value* retVal = NULL;
   if(fieldName.size() == 1) {
     if(fieldName == "x") {
       retVal = llvm::ExtractElementInst::Create(fieldBase, llvm::ConstantInt::get(irgen->GetIntType(), 0), "vecfloat", irgen->GetBasicBlock());

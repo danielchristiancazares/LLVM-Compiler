@@ -5,5 +5,5 @@ float assignvec(float f)
    v2.x = f;
    v2.y = f;
 
-   return v4.x + v4.y;
+   return v2.x + v2.y;
 }
