@@ -31,17 +31,19 @@ a lot of the tests we were running, especially the tests provided for
 the checkpoint. By using valgrind we were able to debug many of our errors
 as well as changing the logic of some of our functions which was the reason
 for many of our issues throughout this project. For testing, we used the
-first set of tests provided to us which were the checkpoint tests. Once
-we got all of those testing working, we added some more tests of our own
-to try to catch any hidden testing that might be checked. We also ran our
+first set of tests provided to us which were the checkpoint tests. Once we 
+got all of those tests working, we added some more tests of our own to try 
+to catch any hidden testing that might be checked. We also ran our
 tests on the extra set of tests provided on piazza by the TA and we also
-noticed that some of our peers posted some tests of their own on piazza.
+noticed that some of our peers posted some tests of their own on piazza. So
+we also ran our project on the student tester provided. Not many of the tests
+passed from the student tester, and we didn't try to fix that as it was causing
+main functionality to stop working too.
+
 Because LLVM IR doesn’t have swizzles, we had to simulate it via shufflevector
 instruction, which was one of the toughest implementations we encountered in
-the project.
-
-Reading through piazza and reading the assigned chapters and references as well 
-as searching for some documentation on LLVM helped us solve a lot of our issues.
+the project. Reading through piazza and reading the assigned chapters and references 
+as well as searching for some documentation on LLVM helped us solve a lot of our issues.
 We finally managed to get a working solution to where all the tests we were using
 passed and we got rid of all of the warnings when running make.
 
