@@ -195,6 +195,7 @@ class SwitchLabel : public Stmt {
   void PrintChildren(int indentLevel);
 
   Expr* getLabel() { return label; }
+  Stmt* getStmt() { return stmt; }
 
   llvm::Value *Emit();
 };

@@ -312,23 +312,25 @@ llvm::Value *IfStmt::Emit() {
   llvm::BranchInst::Create(thenBB, elseBody ? elseBB : footerBB, cond, irgen->GetBasicBlock());
 
   irgen->SetBasicBlock(thenBB);
-  map<string, SymbolTable::DeclAssoc> newScope;
-  Node::symtable->symTable.push_back(newScope);
+  //map<string, SymbolTable::DeclAssoc> newScope;
+  //Node::symtable->symTable.push_back(newScope);
   this->body->Emit();
   if(irgen->GetBasicBlock()->getTerminator() == NULL) {
     llvm::BranchInst::Create(footerBB, irgen->GetBasicBlock());
   }
+  //Node::symtable->symTable.pop_back();
   
   irgen->SetBasicBlock(footerBB); 
 
   if(this->elseBody != NULL) {
     irgen->SetBasicBlock(elseBB);
-    map<string, SymbolTable::DeclAssoc> newScope2;
-    Node::symtable->symTable.push_back(newScope2);
+    //map<string, SymbolTable::DeclAssoc> newScope2;
+    //Node::symtable->symTable.push_back(newScope2);
     this->elseBody->Emit();
     if(irgen->GetBasicBlock()->getTerminator() == NULL) {
       llvm::BranchInst::Create(footerBB, irgen->GetBasicBlock());
     }
+   // Node::symtable->symTable.pop_back();
     irgen->SetBasicBlock(footerBB);
   }
 
@@ -402,40 +404,36 @@ void SwitchStmt::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *SwitchStmt::Emit() {
-  //TODO OMG What do here
-  /*
-    Find  all the cases /default  case  and create  BB  for each  of  them
-    Emit  of  Expression
-    Create  Switch  instrucCon
-    For each  case
-      ‘addCase’ to  Switch  instrucCon
-      Emit  for statement in  case  statement
-      Create  terminator  instrucCon
-  */
-  // cerr << "Switch Emit() is called" << endl;
+  cerr << "Switch Emit() is called" << endl;
   vector<llvm::BasicBlock*> caseStack;
   vector<llvm::BasicBlock*> caseTerminator;
   int numOfCases = 0;
-  // cerr << "There are " << this->cases->NumElements() << " in the list of cases" << endl;
+  cerr << "There are " << this->cases->NumElements() << " in the list of cases" << endl;
   llvm::LLVMContext *context = irgen->GetContext();
   llvm::BasicBlock *footerBB = llvm::BasicBlock::Create(*context, "footerBB", irgen->GetFunction());
-  // cerr << "pushing footer block to breakstack" << endl;
+  //cerr << "pushing footer block to breakstack" << endl;
   breakStack->push_back(footerBB);
 
   for(int i = 0; i < this->cases->NumElements(); i++) {
     if(dynamic_cast<Case*>(this->cases->Nth(i)) != NULL) {
-      // cerr << "pushing case block to stack: case" << i << endl;
+      //cerr << "pushing case block to stack: case" << i << endl;
       llvm::BasicBlock *caseBB = llvm::BasicBlock::Create(*context, "", irgen->GetFunction());
       caseStack.push_back(caseBB);
       caseTerminator.push_back(caseBB);
       numOfCases++;
+      if(dynamic_cast<Case*>(dynamic_cast<Case*>(this->cases->Nth(i))->getStmt())) {
+        llvm::BasicBlock *caseBB = llvm::BasicBlock::Create(*context, "", irgen->GetFunction());
+        caseStack.push_back(caseBB);
+        caseTerminator.push_back(caseBB);
+        numOfCases++;
+      }
     }
     else {
       // cerr << "casestack is not being populated" << endl;
     }
   }
-  // cerr << "Number of cases: " << numOfCases << endl;
-  // cerr << "pushing default block to casestack" << endl;
+  cerr << "Number of cases: " << numOfCases << endl;
+  cerr << "pushing default block to casestack" << endl;
   llvm::BasicBlock *defaultBB = llvm::BasicBlock::Create(*context, "default", irgen->GetFunction());
   
   caseStack.push_back(defaultBB);
@@ -463,9 +461,21 @@ llvm::Value *SwitchStmt::Emit() {
       }
       */
       irgen->SetBasicBlock(tempBB);
-      this->cases->Nth(i)->Emit();
+      if(dynamic_cast<Case*>(dynamic_cast<Case*>(this->cases->Nth(i))->getStmt()) == NULL) {
+         this->cases->Nth(i)->Emit();
+         caseStack.pop_back();
+      }
+      else {
+        caseStack.pop_back();
+        tempBB = caseStack.back();
+        caseLabel = llvm::cast<llvm::ConstantInt>(((SwitchLabel*)((Case*)this->cases->Nth(i))->getStmt())->getLabel()->Emit());
+        switchStmt->addCase(caseLabel, tempBB);
+        irgen->SetBasicBlock(tempBB);
+        dynamic_cast<SwitchLabel*>(this->cases->Nth(i))->getStmt()->Emit();
+        caseStack.pop_back();
+      }
+      //this->cases->Nth(i)->Emit();
 
-      caseStack.pop_back();
       /*
       llvm::BasicBlock *nextBlock = caseStack.back();
       if(irgen->GetBasicBlock()->getTerminator() == NULL) {
