@@ -437,6 +437,7 @@ llvm::Value *SwitchStmt::Emit() {
   // cerr << "Number of cases: " << numOfCases << endl;
   // cerr << "pushing default block to casestack" << endl;
   llvm::BasicBlock *defaultBB = llvm::BasicBlock::Create(*context, "default", irgen->GetFunction());
+  
   caseStack.push_back(defaultBB);
   //caseTerminator.push_back(defaultBB);
   reverse(caseStack.begin(), caseStack.end());

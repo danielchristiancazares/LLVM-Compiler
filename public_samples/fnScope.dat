@@ -1,0 +1,4 @@
+funct: test
+gin: y, int, 1
+param: int, 5
+
