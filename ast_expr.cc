@@ -175,9 +175,7 @@ llvm::Value *ArithmeticExpr::Emit() {
           return llvm::BinaryOperator::CreateFDiv(lhs, rhs, "", irgen->GetBasicBlock());
         }
       }
-      else if((type == irgen->GetVec2Type() && lhs->getType() == type)
-              || (type == irgen->GetVec3Type() && lhs->getType() == type)
-              || (type == irgen->GetVec4Type() && lhs->getType() == type)) {
+      else if(type == irgen->GetVec2Type() || type == irgen->GetVec3Type() || type == irgen->GetVec4Type()) {
         llvm::Value *lhsValue = new llvm::LoadInst(lhsFieldAccess->getPointer(), "loadvector", irgen->GetBasicBlock());
         llvm::Value *rhsValue = new llvm::LoadInst(lhsFieldAccess->getPointer(), "loadvector", irgen->GetBasicBlock());
         llvm::Value *newVector = llvm::UndefValue::get(type);
@@ -326,6 +324,7 @@ llvm::Value *ArithmeticExpr::Emit() {
     }
   }
   else if(!lhsFieldAccess && !rhsFieldAccess) {
+    cerr << "neither are fieldaccess" << endl;
     if(this->left) {
       if(type == irgen->GetIntType()) {
         if(this->op->IsOp("-")) {
@@ -355,18 +354,65 @@ llvm::Value *ArithmeticExpr::Emit() {
           return llvm::BinaryOperator::CreateFDiv(lhs, rhs, "", irgen->GetBasicBlock());
         }
       }
-      else if((type == irgen->GetVec2Type() && lhs->getType() == type)
-              || (type == irgen->GetVec3Type() && lhs->getType() == type)
-              || (type == irgen->GetVec4Type() && lhs->getType() == type)) {
+      else if((type == irgen->GetFloatType() && lhs->getType() == irgen->GetVec2Type())
+         || (type == irgen->GetFloatType() && lhs->getType() == irgen->GetVec3Type())
+         || (type == irgen->GetFloatType() && lhs->getType() == irgen->GetVec4Type())) {
+        cerr << "left is float, right is vec" << endl;
         llvm::Value *newVector = llvm::UndefValue::get(type);
         llvm::Value *extractLeft;
         llvm::Value *extractRight;
         llvm::Value *arithValue;
         llvm::Value *insertOp;
         unsigned int size;
-        if(type == irgen->GetVec2Type()) { size = 2; }
-        if(type == irgen->GetVec3Type()) { size = 3; }
-        if(type == irgen->GetVec4Type()) { size = 4; }
+        if(lhs->getType() == irgen->GetVec2Type()) { size = 2; }
+        if(lhs->getType() == irgen->GetVec3Type()) { size = 3; }
+        if(lhs->getType() == irgen->GetVec4Type()) { size = 4; }
+        if(this->op->IsOp("-")) {
+          for(int i = 0; i < size; i++) {
+            extractLeft = llvm::ExtractElementInst::Create(rhs, llvm::ConstantInt::get(irgen->GetIntType(), i), "extractLeft", irgen->GetBasicBlock());
+            arithValue = llvm::BinaryOperator::CreateFSub(extractLeft, lhs, "newValue", irgen->GetBasicBlock());
+            newVector = llvm::InsertElementInst::Create(newVector, arithValue, llvm::ConstantInt::get(irgen->GetIntType(), i), "newVector", irgen->GetBasicBlock());
+          }
+          return newVector;
+        }
+        else if(this->op->IsOp("+")) {
+          for(int i = 0; i < size; i++) {
+            extractLeft = llvm::ExtractElementInst::Create(rhs, llvm::ConstantInt::get(irgen->GetIntType(), i), "extractLeft", irgen->GetBasicBlock());
+            arithValue = llvm::BinaryOperator::CreateFAdd(extractLeft, lhs, "newValue", irgen->GetBasicBlock());
+            newVector = llvm::InsertElementInst::Create(newVector, arithValue, llvm::ConstantInt::get(irgen->GetIntType(), i), "newVector", irgen->GetBasicBlock());
+          }
+          return newVector;
+        }
+        else if(this->op->IsOp("*")) {
+          for(int i = 0; i < size; i++) {
+            extractLeft = llvm::ExtractElementInst::Create(rhs, llvm::ConstantInt::get(irgen->GetIntType(), i), "extractLeft", irgen->GetBasicBlock());
+            arithValue = llvm::BinaryOperator::CreateFMul(extractLeft, lhs, "newValue", irgen->GetBasicBlock());
+            newVector = llvm::InsertElementInst::Create(newVector, arithValue, llvm::ConstantInt::get(irgen->GetIntType(), i), "newVector", irgen->GetBasicBlock());
+          }
+          return newVector;
+        }
+        else if(this->op->IsOp("/")) {
+          for(int i = 0; i < size; i++) {
+            extractLeft = llvm::ExtractElementInst::Create(rhs, llvm::ConstantInt::get(irgen->GetIntType(), i), "extractLeft", irgen->GetBasicBlock());
+            arithValue = llvm::BinaryOperator::CreateFDiv(extractLeft, lhs, "newValue", irgen->GetBasicBlock());
+            newVector = llvm::InsertElementInst::Create(newVector, arithValue, llvm::ConstantInt::get(irgen->GetIntType(), i), "newVector", irgen->GetBasicBlock());
+          }
+          return newVector;
+        }
+      }
+      else if((type == irgen->GetVec2Type() && lhs->getType() == type)
+              || (type == irgen->GetVec3Type() && lhs->getType() == type)
+              || (type == irgen->GetVec4Type() && lhs->getType() == type)) {
+        cerr << "both are the same vec type" << endl;
+        llvm::Value *newVector;
+        llvm::Value *extractLeft;
+        llvm::Value *extractRight;
+        llvm::Value *arithValue;
+        llvm::Value *insertOp;
+        unsigned int size;
+        if(type == irgen->GetVec2Type()) { size = 2; newVector = llvm::UndefValue::get(irgen->GetVec2Type()); }
+        if(type == irgen->GetVec3Type()) { size = 3; newVector = llvm::UndefValue::get(irgen->GetVec3Type()); }
+        if(type == irgen->GetVec4Type()) { size = 4; newVector = llvm::UndefValue::get(irgen->GetVec4Type()); }
         if(this->op->IsOp("-")) {
           for(int i = 0; i < size; i++) {
             extractLeft = llvm::ExtractElementInst::Create(lhs, llvm::ConstantInt::get(irgen->GetIntType(), i), "extractLeft", irgen->GetBasicBlock());
