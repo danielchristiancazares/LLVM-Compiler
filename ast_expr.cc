@@ -324,13 +324,10 @@ llvm::Value *ArithmeticExpr::Emit() {
     }
   }
   else if(!lhsFieldAccess && !rhsFieldAccess) {
-    cerr << "neither are fieldaccess" << endl;
     if(this->left) {
-      cerr << "left is not null" << endl;
       if((type == irgen->GetFloatType() && lhs->getType() == irgen->GetVec2Type())
          || (type == irgen->GetFloatType() && lhs->getType() == irgen->GetVec3Type())
          || (type == irgen->GetFloatType() && lhs->getType() == irgen->GetVec4Type())) {
-        cerr << "right is float, left is vec" << endl;
         llvm::Value *newVector = llvm::UndefValue::get(lhs->getType());
         llvm::Value *extractLeft;
         llvm::Value *arithValue;
@@ -403,7 +400,6 @@ llvm::Value *ArithmeticExpr::Emit() {
       else if((type == irgen->GetVec2Type() && lhs->getType() == type)
               || (type == irgen->GetVec3Type() && lhs->getType() == type)
               || (type == irgen->GetVec4Type() && lhs->getType() == type)) {
-        cerr << "both are the same vec type" << endl;
         llvm::Value *newVector;
         llvm::Value *extractLeft;
         llvm::Value *extractRight;
@@ -452,7 +448,6 @@ llvm::Value *ArithmeticExpr::Emit() {
       }
     }
     else {
-      cerr << "[ArithmeticExpr] Unary operation: " << arithOp << endl;
       llvm::Value* constOne;
       if(dynamic_cast<VarExpr*>(this->right)) {
         rhsName = dynamic_cast<VarExpr*>(this->right)->GetIdentifier()->GetName();
@@ -470,15 +465,12 @@ llvm::Value *ArithmeticExpr::Emit() {
         constZero = llvm::ConstantInt::get(irgen->GetIntType(), 0);
 
         if(this->op->IsOp("--")) {
-          // cerr << "[ArithmeticExpr] Integer Subtraction Prefix" << endl;
           binaryOp = llvm::BinaryOperator::CreateSub(rhs, constOne, "", irgen->GetBasicBlock());
         }
         else if(this->op->IsOp("++")) {
-          // cerr << "[ArithmeticExpr] Integer Addition Prefix" << endl;
           binaryOp = llvm::BinaryOperator::CreateAdd(rhs, constOne, "", irgen->GetBasicBlock());
         }
         else if(this->op->IsOp("-")) {
-          // cerr << "[ArithmeticExpr] Negative number" << endl;
           return llvm::BinaryOperator::CreateSub(constZero, rhs, "negativeNum", irgen->GetBasicBlock());
         }
         else if(this->op->IsOp("+")) {
@@ -489,15 +481,12 @@ llvm::Value *ArithmeticExpr::Emit() {
         constOne = llvm::ConstantFP::get(irgen->GetFloatType(), (float)1.0);
         constZero = llvm::ConstantFP::get(irgen->GetFloatType(), (float)0.0);
         if(this->op->IsOp("--")) {
-          // cerr << "[ArithmeticExpr] Float Subtraction Prefix" << endl;
           binaryOp = llvm::BinaryOperator::CreateFSub(rhs, constOne, "", irgen->GetBasicBlock());
         }
         else if(this->op->IsOp("++")) {
-          // cerr << "[ArithmeticExpr] Integer Addition Prefix" << endl;
           binaryOp = llvm::BinaryOperator::CreateFAdd(rhs, constOne, "", irgen->GetBasicBlock());
         }
         else if(this->op->IsOp("-")) {
-          // cerr << "[ArithmeticExpr] Negative number" << endl;
           return llvm::BinaryOperator::CreateFSub(constZero, rhs, "negativeNum", irgen->GetBasicBlock());
         }
         else if(this->op->IsOp("+")) {
@@ -620,13 +609,14 @@ llvm::Value *FieldAccess::getPointer() {
 }
 
 llvm::Value *AssignExpr::Emit() {
+  cerr << "AssignExpr" << endl;
   llvm::Value *lhs = NULL;
   llvm::Value *rhs = NULL;
   FieldAccess *lhsFieldAccess = NULL;
   llvm::Value *retVal = NULL;
   VarExpr *lhsVar = dynamic_cast<VarExpr *>(left);
   llvm::Value *binaryOp = NULL;
-  llvm::Value *insertOp = NULL;
+  llvm::Value *arithOp = NULL;
   if(lhsVar) {
     lhs = this->left->Emit();
     lhs = llvm::cast<llvm::LoadInst>(lhs)->getPointerOperand();
@@ -661,8 +651,8 @@ llvm::Value *AssignExpr::Emit() {
           swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
         }
         if(rhs->getType() == irgen->GetFloatType()) {
-          insertOp = llvm::InsertElementInst::Create(lhsValue, rhs, swizzleIdx, "singleFloat", irgen->GetBasicBlock());
-          new llvm::StoreInst(insertOp, lhs, irgen->GetBasicBlock());
+          lhsValue = llvm::InsertElementInst::Create(lhsValue, rhs, swizzleIdx, "singleFloat", irgen->GetBasicBlock());
+          new llvm::StoreInst(lhsValue, lhs, irgen->GetBasicBlock());
           return rhs;
         }
         else {
@@ -670,7 +660,7 @@ llvm::Value *AssignExpr::Emit() {
           lhsValue = llvm::InsertElementInst::Create(lhsValue, extractedValue, swizzleIdx, "newValInserted", irgen->GetBasicBlock());
         }
       }
-      new llvm::StoreInst(insertOp, lhs, irgen->GetBasicBlock());
+      new llvm::StoreInst(lhsValue, lhs, irgen->GetBasicBlock());
       return rhs;
     }
     retVal = this->right->Emit();
@@ -678,6 +668,41 @@ llvm::Value *AssignExpr::Emit() {
     return retVal;
   }
   else if(this->op->IsOp("*=")) {
+    if(lhsFieldAccess) {
+      rhs = this->right->Emit();
+      llvm::Value *lhsValue = new llvm::LoadInst(lhsFieldAccess->getPointer(), "loadvector", irgen->GetBasicBlock());
+      string swizzle = lhsFieldAccess->GetSwizzle();
+      llvm::Constant *swizzleIdx;
+      llvm::Value *extractedValue;
+      for(int i = 0; i < swizzle.size(); i++) {
+        if(swizzle[i] == 'x') {
+          swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
+        }
+        else if(swizzle[i] == 'y') {
+          swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+        }
+        else if(swizzle[i] == 'z') {
+          swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 2);
+        }
+        else if(swizzle[i] == 'w') {
+          swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
+        }
+        if(rhs->getType() == irgen->GetFloatType()) {
+          extractedValue = llvm::ExtractElementInst::Create(lhsValue, llvm::ConstantInt::get(irgen->GetIntType(), i), "extractRight", irgen->GetBasicBlock());
+          arithOp = llvm::BinaryOperator::CreateFMul(extractedValue, rhs, "mulFAssign", irgen->GetBasicBlock());
+          lhsValue = llvm::InsertElementInst::Create(lhsValue, arithOp, swizzleIdx, "singleFloat", irgen->GetBasicBlock());
+          new llvm::StoreInst(lhsValue, lhs, irgen->GetBasicBlock());
+          return rhs;
+        }
+        else {
+          extractedValue = llvm::ExtractElementInst::Create(lhsValue, llvm::ConstantInt::get(irgen->GetIntType(), i), "extractRight", irgen->GetBasicBlock());
+          arithOp = llvm::BinaryOperator::CreateFMul(extractedValue, rhs, "mulFAssign", irgen->GetBasicBlock());
+          lhsValue = llvm::InsertElementInst::Create(lhsValue, extractedValue, swizzleIdx, "newValInserted", irgen->GetBasicBlock());
+        }
+      }
+      new llvm::StoreInst(lhsValue, lhs, irgen->GetBasicBlock());
+      return rhs;
+    }
     retVal = this->right->Emit();
     llvm::Type *type = lhs->getType();
     if(type == irgen->GetFloatType()) {
@@ -690,6 +715,41 @@ llvm::Value *AssignExpr::Emit() {
     return retVal;
   }
   else if(this->op->IsOp("+=")) {
+    if(lhsFieldAccess) {
+      rhs = this->right->Emit();
+      llvm::Value *lhsValue = new llvm::LoadInst(lhsFieldAccess->getPointer(), "loadvector", irgen->GetBasicBlock());
+      string swizzle = lhsFieldAccess->GetSwizzle();
+      llvm::Constant *swizzleIdx;
+      llvm::Value *extractedValue;
+      for(int i = 0; i < swizzle.size(); i++) {
+        if(swizzle[i] == 'x') {
+          swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
+        }
+        else if(swizzle[i] == 'y') {
+          swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+        }
+        else if(swizzle[i] == 'z') {
+          swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 2);
+        }
+        else if(swizzle[i] == 'w') {
+          swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
+        }
+        if(rhs->getType() == irgen->GetFloatType()) {
+          extractedValue = llvm::ExtractElementInst::Create(lhsValue, llvm::ConstantInt::get(irgen->GetIntType(), i), "extractRight", irgen->GetBasicBlock());
+          arithOp = llvm::BinaryOperator::CreateFAdd(extractedValue, rhs, "mulFAssign", irgen->GetBasicBlock());
+          lhsValue = llvm::InsertElementInst::Create(lhsValue, arithOp, swizzleIdx, "singleFloat", irgen->GetBasicBlock());
+          new llvm::StoreInst(lhsValue, lhs, irgen->GetBasicBlock());
+          return rhs;
+        }
+        else {
+          extractedValue = llvm::ExtractElementInst::Create(lhsValue, llvm::ConstantInt::get(irgen->GetIntType(), i), "extractRight", irgen->GetBasicBlock());
+          arithOp = llvm::BinaryOperator::CreateFAdd(extractedValue, rhs, "mulFAssign", irgen->GetBasicBlock());
+          lhsValue = llvm::InsertElementInst::Create(lhsValue, extractedValue, swizzleIdx, "newValInserted", irgen->GetBasicBlock());
+        }
+      }
+      new llvm::StoreInst(lhsValue, lhs, irgen->GetBasicBlock());
+      return rhs;
+    }
     retVal = this->right->Emit();
     if(type == irgen->GetFloatType()) {
       binaryOp = llvm::BinaryOperator::CreateFAdd(left->Emit(), retVal, "addFAssign", irgen->GetBasicBlock());
@@ -701,6 +761,41 @@ llvm::Value *AssignExpr::Emit() {
     return retVal;
   }
   else if(this->op->IsOp("-=")) {
+    if(lhsFieldAccess) {
+      rhs = this->right->Emit();
+      llvm::Value *lhsValue = new llvm::LoadInst(lhsFieldAccess->getPointer(), "loadvector", irgen->GetBasicBlock());
+      string swizzle = lhsFieldAccess->GetSwizzle();
+      llvm::Constant *swizzleIdx;
+      llvm::Value *extractedValue;
+      for(int i = 0; i < swizzle.size(); i++) {
+        if(swizzle[i] == 'x') {
+          swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
+        }
+        else if(swizzle[i] == 'y') {
+          swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+        }
+        else if(swizzle[i] == 'z') {
+          swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 2);
+        }
+        else if(swizzle[i] == 'w') {
+          swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
+        }
+        if(rhs->getType() == irgen->GetFloatType()) {
+          extractedValue = llvm::ExtractElementInst::Create(lhsValue, llvm::ConstantInt::get(irgen->GetIntType(), i), "extractRight", irgen->GetBasicBlock());
+          arithOp = llvm::BinaryOperator::CreateFSub(extractedValue, rhs, "mulFAssign", irgen->GetBasicBlock());
+          lhsValue = llvm::InsertElementInst::Create(lhsValue, arithOp, swizzleIdx, "singleFloat", irgen->GetBasicBlock());
+          new llvm::StoreInst(lhsValue, lhs, irgen->GetBasicBlock());
+          return rhs;
+        }
+        else {
+          extractedValue = llvm::ExtractElementInst::Create(lhsValue, llvm::ConstantInt::get(irgen->GetIntType(), i), "extractRight", irgen->GetBasicBlock());
+          arithOp = llvm::BinaryOperator::CreateFSub(extractedValue, rhs, "mulFAssign", irgen->GetBasicBlock());
+          lhsValue = llvm::InsertElementInst::Create(lhsValue, extractedValue, swizzleIdx, "newValInserted", irgen->GetBasicBlock());
+        }
+      }
+      new llvm::StoreInst(lhsValue, lhs, irgen->GetBasicBlock());
+      return rhs;
+    }
     retVal = this->right->Emit();
     if(type == irgen->GetFloatType()) {
       binaryOp = llvm::BinaryOperator::CreateFSub(left->Emit(), retVal, "subFAssign", irgen->GetBasicBlock());
@@ -712,6 +807,41 @@ llvm::Value *AssignExpr::Emit() {
     return retVal;
   }
   else if(this->op->IsOp("/=")) {
+    if(lhsFieldAccess) {
+      rhs = this->right->Emit();
+      llvm::Value *lhsValue = new llvm::LoadInst(lhsFieldAccess->getPointer(), "loadvector", irgen->GetBasicBlock());
+      string swizzle = lhsFieldAccess->GetSwizzle();
+      llvm::Constant *swizzleIdx;
+      llvm::Value *extractedValue;
+      for(int i = 0; i < swizzle.size(); i++) {
+        if(swizzle[i] == 'x') {
+          swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 0);
+        }
+        else if(swizzle[i] == 'y') {
+          swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 1);
+        }
+        else if(swizzle[i] == 'z') {
+          swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 2);
+        }
+        else if(swizzle[i] == 'w') {
+          swizzleIdx = llvm::ConstantInt::get(irgen->GetIntType(), 3);
+        }
+        if(rhs->getType() == irgen->GetFloatType()) {
+          extractedValue = llvm::ExtractElementInst::Create(lhsValue, llvm::ConstantInt::get(irgen->GetIntType(), i), "extractRight", irgen->GetBasicBlock());
+          arithOp = llvm::BinaryOperator::CreateFDiv(extractedValue, rhs, "mulFAssign", irgen->GetBasicBlock());
+          lhsValue = llvm::InsertElementInst::Create(lhsValue, arithOp, swizzleIdx, "singleFloat", irgen->GetBasicBlock());
+          new llvm::StoreInst(lhsValue, lhs, irgen->GetBasicBlock());
+          return rhs;
+        }
+        else {
+          extractedValue = llvm::ExtractElementInst::Create(lhsValue, llvm::ConstantInt::get(irgen->GetIntType(), i), "extractRight", irgen->GetBasicBlock());
+          arithOp = llvm::BinaryOperator::CreateFDiv(extractedValue, rhs, "mulFAssign", irgen->GetBasicBlock());
+          lhsValue = llvm::InsertElementInst::Create(lhsValue, extractedValue, swizzleIdx, "newValInserted", irgen->GetBasicBlock());
+        }
+      }
+      new llvm::StoreInst(lhsValue, lhs, irgen->GetBasicBlock());
+      return rhs;
+    }
     retVal = this->right->Emit();
     if(type == irgen->GetFloatType()) {
       binaryOp = llvm::BinaryOperator::CreateFDiv(left->Emit(), retVal, "divFAssign", irgen->GetBasicBlock());
