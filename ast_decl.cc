@@ -267,7 +267,7 @@ llvm::Value *FnDecl::Emit() {
       llvm::ReturnInst::Create(*context, irgen->GetBasicBlock());
     }
     else {
-      cerr << "[FnDecl] UnreachableInst returned." << endl;
+//      cerr << "[FnDecl] UnreachableInst returned." << endl;
       new llvm::UnreachableInst(*context, irgen->GetBasicBlock());
     }
   }

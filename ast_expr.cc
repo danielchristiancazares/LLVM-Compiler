@@ -697,7 +697,7 @@ llvm::Value *FieldAccess::getPointer() {
 }
 
 llvm::Value *AssignExpr::Emit() {
-  cerr << "AssignExpr" << endl;
+//  cerr << "AssignExpr" << endl;
   llvm::Value *lhs = NULL;
   llvm::Value *rhs = NULL;
   FieldAccess *lhsFieldAccess = NULL;
@@ -1123,7 +1123,7 @@ llvm::Value *Call::Emit() {
 llvm::Value *ConditionalExpr::Emit() {
   // Expr *cond, *trueExpr, *falseExpr;
   // Create (Type *Ty, unsigned NumReservedValues, const Twine &NameStr="", Instruction *InsertBefore=nullptr)
-  cerr << "[ConditionalExpr] Emit is called" << endl;
+//  cerr << "[ConditionalExpr] Emit is called" << endl;
   llvm::Value *cond = this->cond->Emit();
   llvm::LLVMContext *context = irgen->GetContext();
   llvm::Value *trueBranch = NULL;
@@ -1132,9 +1132,9 @@ llvm::Value *ConditionalExpr::Emit() {
   llvm::BasicBlock *falseBB = llvm::BasicBlock::Create(*context, "FalseBB", irgen->GetFunction());
   llvm::BasicBlock *footerBB = llvm::BasicBlock::Create(*context, "CondFooterBB", irgen->GetFunction());
 
-  cerr << "[ConditionalExpr] BasicBlocks have been made, making a SelectInst branch now" << endl;
+//  cerr << "[ConditionalExpr] BasicBlocks have been made, making a SelectInst branch now" << endl;
   llvm::BranchInst::Create(trueBB, falseBB, cond, irgen->GetBasicBlock());
-  cerr << "[ConditionalExpr] BasicBlocks have been made, making a SelectInst branch now" << endl;
+//  cerr << "[ConditionalExpr] BasicBlocks have been made, making a SelectInst branch now" << endl;
 
   irgen->SetBasicBlock(trueBB);
   trueBranch = this->trueExpr->Emit();
@@ -1151,13 +1151,13 @@ llvm::Value *ConditionalExpr::Emit() {
   }
   irgen->SetBasicBlock(footerBB);
 
-  cerr << "[ConditionalExpr] Making PHINode" << endl;
+//  cerr << "[ConditionalExpr] Making PHINode" << endl;
   llvm::PHINode *phiNode = llvm::PHINode::Create(falseBranch->getType(), 0, "PHINode", irgen->GetBasicBlock());
   //void  addIncoming (Value *V, BasicBlock *BB)
-  cerr << "[ConditionalExpr] Adding incoming statements" << endl;
+//  cerr << "[ConditionalExpr] Adding incoming statements" << endl;
   phiNode->addIncoming(trueBranch, trueBB);
   phiNode->addIncoming(falseBranch, falseBB);
 
-  cerr << "[ConditionalExpr] Returning PHINode" << endl;
+//  cerr << "[ConditionalExpr] Returning PHINode" << endl;
   return phiNode;
 }

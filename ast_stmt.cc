@@ -404,11 +404,11 @@ void SwitchStmt::PrintChildren(int indentLevel) {
 }
 
 llvm::Value *SwitchStmt::Emit() {
-  cerr << "Switch Emit() is called" << endl;
+  //cerr << "Switch Emit() is called" << endl;
   vector<llvm::BasicBlock*> caseStack;
   vector<llvm::BasicBlock*> caseTerminator;
   int numOfCases = 0;
-  cerr << "There are " << this->cases->NumElements() << " in the list of cases" << endl;
+//  cerr << "There are " << this->cases->NumElements() << " in the list of cases" << endl;
   llvm::LLVMContext *context = irgen->GetContext();
   llvm::BasicBlock *footerBB = llvm::BasicBlock::Create(*context, "footerBB", irgen->GetFunction());
   //cerr << "pushing footer block to breakstack" << endl;
@@ -432,8 +432,8 @@ llvm::Value *SwitchStmt::Emit() {
       // cerr << "casestack is not being populated" << endl;
     }
   }
-  cerr << "Number of cases: " << numOfCases << endl;
-  cerr << "pushing default block to casestack" << endl;
+//  cerr << "Number of cases: " << numOfCases << endl;
+//  cerr << "pushing default block to casestack" << endl;
   llvm::BasicBlock *defaultBB = llvm::BasicBlock::Create(*context, "default", irgen->GetFunction());
   
   caseStack.push_back(defaultBB);
