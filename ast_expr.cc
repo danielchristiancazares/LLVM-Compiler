@@ -620,7 +620,6 @@ llvm::Value *FieldAccess::getPointer() {
 }
 
 llvm::Value *AssignExpr::Emit() {
-  cerr << "assignexpr" << endl;
   llvm::Value *lhs = NULL;
   llvm::Value *rhs = NULL;
   FieldAccess *lhsFieldAccess = NULL;
@@ -630,7 +629,6 @@ llvm::Value *AssignExpr::Emit() {
   llvm::Value *insertOp = NULL;
   if(lhsVar) {
     lhs = this->left->Emit();
-    cerr << "assignexpr var: " << lhsVar->GetIdentifier()->GetName() << endl;
     lhs = llvm::cast<llvm::LoadInst>(lhs)->getPointerOperand();
   }
   else if(dynamic_cast<FieldAccess *>(left)) {
@@ -664,18 +662,18 @@ llvm::Value *AssignExpr::Emit() {
         }
         if(rhs->getType() == irgen->GetFloatType()) {
           insertOp = llvm::InsertElementInst::Create(lhsValue, rhs, swizzleIdx, "singleFloat", irgen->GetBasicBlock());
-          break;
+          new llvm::StoreInst(insertOp, lhs, irgen->GetBasicBlock());
+          return rhs;
         }
         else {
           extractedValue = llvm::ExtractElementInst::Create(rhs, swizzleIdx, "extractedVal", irgen->GetBasicBlock());
-          insertOp = llvm::InsertElementInst::Create(lhsValue, extractedValue, swizzleIdx, "newValInserted", irgen->GetBasicBlock());
+          lhsValue = llvm::InsertElementInst::Create(lhsValue, extractedValue, swizzleIdx, "newValInserted", irgen->GetBasicBlock());
         }
       }
       new llvm::StoreInst(insertOp, lhs, irgen->GetBasicBlock());
       return rhs;
     }
     retVal = this->right->Emit();
-    cerr << "assignexpr: done emitting" << endl;
     new llvm::StoreInst(retVal, lhs, irgen->GetBasicBlock());
     return retVal;
   }
